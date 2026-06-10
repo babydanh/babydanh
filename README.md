@@ -27,18 +27,27 @@
         <li>🎮 **Hobbies**: Minecraft, Valorant</li>
       </ul>
     </td>
-    <td width="30%" valign="top" align="right" border="0">
-      <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
+    <td width="50%" valign="top" align="center" border="0">
+      <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" width="95%" alt="Danh's GitHub Stats" />
     </td>
   </tr>
 </table>
 
 <hr style="border-top: 1px solid #30363d; margin-top: 30px;">
 
+<h2 align="center">GitHub Trophies</h2>
+<p align="center">
+  <a href="https://github.com/ryo-ma/github-profile-trophy">
+    <img src="https://github-profile-trophy.vercel.app/?username=babydanh&theme=tokyonight&column=4&margin-w=15&margin-h=15" alt="Github Trophies" />
+  </a>
+</p>
+
+<hr style="border-top: 1px solid #30363d; margin-top: 30px;">
+
 <h2 align="center">Tech Stacks</h2>
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight" width="100%" alt="Top Languages" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight" width="450" alt="Top Languages" />
 </p>
 
 <p align="center">
