@@ -28,7 +28,7 @@
       </ul>
     </td>
     <td width="50%" valign="top" align="right" border="0">
-      <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight" width="100%" alt="Top Languages" />
+      <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
     </td>
   </tr>
 </table>
@@ -38,7 +38,7 @@
 <h2 align="center">Tech Stacks</h2>
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight" width="100%" alt="Top Languages" />
 </p>
 
 <p align="center">
@@ -70,4 +70,35 @@
   <tr border="0">
     <td><a href="https://www.adobe.com/in/products/illustrator.html" target="_blank" rel="noreferrer"><img src="https://www.vectorlogo.zone/logos/adobe_illustrator/adobe_illustrator-icon.svg" alt="illustrator" width="45" height="45" hspace="5" vspace="5"/></a></td>
     <td><a href="https://www.java.com" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/java/java-original.svg" alt="java" width="45" height="45" hspace="5" vspace="5"/></a></td>
-    <td><a href="https://www.mongodb.com/" target="_blank" rel="noreferrer"><img src="https
+    <td><a href="https://www.mongodb.com/" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/mongodb/mongodb-original-wordmark.svg" alt="mongodb" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://www.microsoft.com/en-us/sql-server" target="_blank" rel="noreferrer"><img src="https://www.svgrepo.com/show/303229/microsoft-sql-server-logo.svg" alt="mssql" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://nodejs.org" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/nodejs/nodejs-original-wordmark.svg" alt="nodejs" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://www.oracle.com/" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/oracle/oracle-original.svg" alt="oracle" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://postman.com" target="_blank" rel="noreferrer"><img src="https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg" alt="postman" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://www.python.org" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://reactjs.org/" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/react/react-original-wordmark.svg" alt="react" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://reactnative.dev/" target="_blank" rel="noreferrer"><img src="https://reactnative.dev/img/header_logo.svg" alt="reactnative" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://www.selenium.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/detain/svg-logos/780f25886640cef088af994181646db2f6b1a3f8/svg/selenium-logo.svg" alt="selenium" width="45" height="45" hspace="5" vspace="5"/></a></td>
+    <td><a href="https://www.sqlite.org/" target="_blank" rel="noreferrer"><img src="https://www.vectorlogo.zone/logos/sqlite/sqlite-icon.svg" alt="sqlite" width="45" height="45" hspace="5" vspace="5"/></a></td>
+  </tr>
+</table>
+
+<hr style="border-top: 1px solid #30363d; margin-top: 30px;">
+
+<h2 align="center">My Snake Contribution <3</h2>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/babydanh/babydanh/output/github-contribution-grid-snake-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/babydanh/babydanh/output/github-contribution-grid-snake.svg">
+    <img alt="github contribution grid snake animation" src="https://raw.githubusercontent.com/babydanh/babydanh/output/github-contribution-grid-snake.svg">
+  </picture>
+</p>
+
+<p align="center">
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=babydanh&theme=tokyonight&hide_border=true" />
+</p>
+
+<p align="center">
+  Thanks for visiting! Drop a ⭐ if you like my work!
+</p>
