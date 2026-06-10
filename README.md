@@ -35,11 +35,12 @@
 
 <hr style="border-top: 1px solid #30363d; margin-top: 30px;">
 
-<h2 align="center">GitHub Trophies</h2>
+<h2 align="center">GitHub Achievements</h2>
 <p align="center">
-  <a href="https://github.com/ryo-ma/github-profile-trophy">
-    <img src="https://github-profile-trophy.vercel.app/?username=babydanh&theme=tokyonight&column=4&margin-w=15&margin-h=15" alt="Github Trophies" />
-  </a>
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge&logo=github" alt="PRs Welcome" />
+  <img src="https://img.shields.io/badge/Open_Source-Contributor-blue?style=for-the-badge&logo=git" alt="OS Contributor" />
+  <img src="https://img.shields.io/badge/Code_Style-Clean-ff69b4?style=for-the-badge&logo=visual-studio-code" alt="Clean Code" />
+  <img src="https://img.shields.io/badge/Main_Focus-Mobile_Computing-orange?style=for-the-badge&logo=flutter" alt="Flutter Focus" />
 </p>
 
 <hr style="border-top: 1px solid #30363d; margin-top: 30px;">
