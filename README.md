@@ -40,7 +40,7 @@
 <h2 align="center">Tech Stacks</h2>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/babydanh/babydanh/master/profile-summary-card-output/tokyonight/3-stats.svg" />
+  <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
 </p>
 
 <p align="center">
