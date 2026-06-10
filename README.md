@@ -30,7 +30,7 @@
     <td width="45%" valign="top" align="right" border="0">
       <img src="https://raw.githubusercontent.com/babydanh/babydanh/master/profile-summary-card-output/tokyonight/0-profile-details.svg" width="100%"/>
       <br/><br/>
-      <img src="https://raw.githubusercontent.com/babydanh/babydanh/master/profile-summary-card-output/tokyonight/2-repo-language.svg" width="100%"/>
+      <img src="[https://raw.githubusercontent.com/babydanh/babydanh/master/profile-summary-card-output/tokyonight/2-repo-language.svg](https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats)" width="100%"/>
     </td>
   </tr>
 </table>
@@ -40,7 +40,7 @@
 <h2 align="center">Tech Stacks</h2>
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
+  <img src="https://raw.githubusercontent.com/babydanh/babydanh/master/profile-summary-card-output/tokyonight/3-stats.svg" />
 </p>
 
 <p align="center">
