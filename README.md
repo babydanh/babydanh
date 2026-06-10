@@ -27,7 +27,7 @@
         <li>🎮 **Hobbies**: Minecraft, Valorant</li>
       </ul>
     </td>
-    <td width="50%" valign="top" align="right" border="0">
+    <td width="30%" valign="top" align="right" border="0">
       <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" alt="Danh's GitHub Stats" />
     </td>
   </tr>
