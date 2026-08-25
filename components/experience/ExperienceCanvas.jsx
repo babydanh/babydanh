@@ -189,6 +189,8 @@ function Scene({ chapter, audioData, pointer, activeProject, onSelectProject, on
     desired.y += pointer.y * 0.12;
     camera.position.lerp(desired, 1 - Math.exp(-3.8 * delta));
     camera.lookAt(new THREE.Vector3(...target.look));
+    camera.fov = THREE.MathUtils.damp(camera.fov, 42 + audioData.beatPulse * 3.5 + audioData.energy * 1.2, 4, delta);
+    camera.updateProjectionMatrix();
     if (group.current) group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, pointer.x * 0.025, 0.04);
   });
   return (
