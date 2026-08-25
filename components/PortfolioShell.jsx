@@ -30,6 +30,7 @@ export default function PortfolioShell() {
   const audioRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
+  const gainRef = useRef(null);
   const rafRef = useRef(null);
   const lastBeatRef = useRef(0);
   const transitionTimerRef = useRef(null);
@@ -39,6 +40,7 @@ export default function PortfolioShell() {
   const [activeProject, setActiveProject] = useState(null);
   const [hoveredProject, setHoveredProject] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.82);
   const [audioData, setAudioData] = useState(INITIAL_AUDIO);
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
 
@@ -109,10 +111,10 @@ export default function PortfolioShell() {
       if (!audioContextRef.current) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
-        const context = new AudioContextClass(); const analyser = context.createAnalyser();
-        analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.82;
-        const source = context.createMediaElementSource(audio); source.connect(analyser); analyser.connect(context.destination);
-        audioContextRef.current = context; analyserRef.current = analyser;
+        const context = new AudioContextClass(); const analyser = context.createAnalyser(); const gain = context.createGain();
+        analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.82; gain.gain.value = 1.45;
+        const source = context.createMediaElementSource(audio); source.connect(gain); gain.connect(analyser); analyser.connect(context.destination);
+        audioContextRef.current = context; analyserRef.current = analyser; gainRef.current = gain;
       }
       await audioContextRef.current.resume(); await audio.play(); setIsPlaying(true);
     } catch { /* Audio is optional; the scene remains playable without it. */ }
@@ -120,6 +122,12 @@ export default function PortfolioShell() {
 
   const toggleAudio = async () => {
     if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } else await activateAudio();
+  };
+
+  const handleVolume = (event) => {
+    const nextVolume = Number(event.target.value);
+    setVolume(nextVolume);
+    if (gainRef.current) gainRef.current.gain.value = nextVolume * 1.75;
   };
 
   const enterExperience = async () => { setHasEntered(true); setChapter('hub'); await activateAudio(); };
@@ -137,7 +145,7 @@ export default function PortfolioShell() {
       <header className="game-header">
         <button className="game-brand" type="button" onClick={() => selectChapter('hub')}><span className="brand-cross">+</span><span>DANH <small>// SIGNAL RUNNER</small></span></button>
         <div className="header-readout"><span className="live-dot" /> {currentChapter.code} / {currentChapter.label}</div>
-        <div className="header-controls"><button type="button" onClick={toggleAudio} className="hud-control"><span className={`mini-bars ${isPlaying ? 'playing' : ''}`}><i /><i /><i /></span>{isPlaying ? 'AUDIO LIVE' : 'AUDIO OFF'}</button><button type="button" className="hud-control" onClick={() => selectChapter('contact')}>CONTACT ↗</button></div>
+        <div className="header-controls"><button type="button" onClick={toggleAudio} className="hud-control"><span className={`mini-bars ${isPlaying ? 'playing' : ''}`}><i /><i /><i /></span>{isPlaying ? 'AUDIO LIVE' : 'AUDIO OFF'}</button><label className="volume-control"><span>VOL</span><input aria-label="Audio volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolume} /></label><button type="button" onClick={() => selectChapter('contact')} className="hud-control">CONTACT ↗</button></div>
       </header>
 
       <aside className="chapter-rail" aria-label="Chapter navigation">
@@ -153,7 +161,7 @@ export default function PortfolioShell() {
 
         {chapter === 'map' && <section className="chapter-panel map-panel"><div className="panel-tag">02 / QUEST MAP</div><div className="map-content"><div className="map-intro"><p className="system-kicker">SELECTED TRANSMISSIONS</p><h2>Choose a<br /><em>mission.</em></h2><p>Three signals from the current archive. Hover a node in the scene or select a dossier below.</p><div className="map-coordinates">LAT 10.8231 / LNG 106.6297<br />ARCHIVE DEPTH: 03 NODES</div></div><div className="mission-list">{PROJECTS.map((item, index) => <button type="button" key={item.title} className={`mission-row ${activeProject === index ? 'selected' : ''} ${hoveredProject === index ? 'hovered' : ''}`} onMouseEnter={() => setHoveredProject(index)} onMouseLeave={() => setHoveredProject(null)} onClick={() => setActiveProject(index)}><span className="mission-index" style={{ color: item.color }}>{item.code}</span><span className="mission-name"><small>{item.type}</small>{item.title}</span><span className="mission-status">{item.status}</span><span className="mission-arrow">↗</span></button>)}</div></div>{project && <div className="dossier"><div className="dossier-head"><span>DOSSIER / {project.code}</span><button type="button" onClick={() => setActiveProject(null)}>CLOSE ×</button></div><div className="dossier-body"><p className="system-kicker" style={{ color: project.color }}>{project.type}</p><h3>{project.title}</h3><p>{project.description}</p><div className="dossier-info"><span>ROLE<strong>{project.role}</strong></span><span>STACK<strong>{project.stack.join(' · ')}</strong></span></div><p className="dossier-signal">“{project.signal}”</p><a href="https://github.com/babydanh" target="_blank" rel="noreferrer" className="text-action">Open GitHub signal <span>↗</span></a></div></div>}<div className="chapter-bottom"><span>HOVER NODES / SELECT DOSSIER</span><span>MAP LINK: ACTIVE</span></div></section>}
 
-        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <div className={`skill-node node-${index % 5}`} key={skill.label}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></div>)}</div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
+        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <div className={`skill-node skill-${index}`} key={skill.label}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></div>)}</div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
 
         {chapter === 'contact' && <section className="chapter-panel contact-panel"><div className="panel-tag">04 / FINAL SIGNAL</div><div className="contact-content"><div className="contact-copy"><p className="system-kicker">CHANNEL OPEN</p><h2>Send a<br /><em>signal.</em></h2><p>Have an idea, a project, or a good reason to build something? The channel is open.</p><a className="contact-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div><div className="transmission-gate"><div className="gate-ring ring-a" /><div className="gate-ring ring-b" /><div className="gate-core">TX</div><span className="gate-label">READY TO TRANSMIT</span></div></div><div className="social-row"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram ↗</a></div><div className="chapter-bottom"><span>END OF RUN / THANKS FOR EXPLORING</span><span>VN / 2026</span></div></section>}
       </main>}
