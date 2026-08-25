@@ -1,115 +1,103 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-const ExperienceCanvas = dynamic(() => import('./experience/ExperienceCanvas'), {
-  ssr: false,
-  loading: () => null,
-});
-
+const ExperienceCanvas = dynamic(() => import('./experience/ExperienceCanvas'), { ssr: false });
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-const PROJECTS = [
-  {
-    number: '01',
-    title: 'RaoVat24H',
-    type: 'Flutter ecosystem',
-    description: 'A marketplace experience designed around fast discovery, clear flows, and a professional mobile-first interface.',
-    stack: ['Flutter', 'Dart', 'Firebase'],
-    accent: '#00e5ff',
-  },
-  {
-    number: '02',
-    title: 'Neon Archive',
-    type: 'Interactive portfolio',
-    description: 'A realtime visual identity system where motion, sound, and code become one navigable digital space.',
-    stack: ['Next.js', 'Three.js', 'Web Audio'],
-    accent: '#a78bfa',
-  },
-  {
-    number: '03',
-    title: 'EA Research Lab',
-    type: 'Trading strategy studies',
-    description: 'Exploring disciplined strategy design, data visualization, and automation concepts for MT4 and MT5.',
-    stack: ['MQL', 'Python', 'Research'],
-    accent: '#ff4d8d',
-  },
+const CHAPTERS = [
+  { id: 'boot', code: '00', label: 'Boot sequence' },
+  { id: 'hub', code: '01', label: 'Operator hub' },
+  { id: 'map', code: '02', label: 'Quest map' },
+  { id: 'loadout', code: '03', label: 'Skill loadout' },
+  { id: 'contact', code: '04', label: 'Final signal' },
 ];
 
-const initialAudio = { bass: 0, mid: 0, treble: 0, energy: 0, beat: 0 };
+const PROJECTS = [
+  { title: 'RaoVat24H', type: 'Mobile marketplace', status: 'In development', color: '#00e5ff', code: 'RV-24', description: 'A mobile marketplace concept focused on fast discovery, clean flows, and a useful buying experience.', role: 'Product / Mobile development', stack: ['Flutter', 'Dart', 'Firebase'], signal: 'A practical product with a human pace.' },
+  { title: 'Neon Archive', type: 'Realtime portfolio', status: 'Active signal', color: '#a78bfa', code: 'NA-26', description: 'This interactive portfolio system: a realtime world where code, motion, sound, and identity meet.', role: 'Creative development / Frontend', stack: ['Next.js', 'Three.js', 'Web Audio'], signal: 'A portfolio that behaves like a world.' },
+  { title: 'EA Research Lab', type: 'Strategy research', status: 'Exploring', color: '#ff4d8d', code: 'EA-MT', description: 'Researching disciplined strategy design and automation concepts for MT4 and MT5.', role: 'Research / Systems thinking', stack: ['MQL', 'Python', 'MT4 / MT5'], signal: 'Turning curiosity into structured experiments.' },
+];
+
+const SKILLS = [
+  { label: 'Dart', group: 'BUILD', level: 'Core language' }, { label: 'Flutter', group: 'BUILD', level: 'Mobile systems' }, { label: 'Next.js', group: 'WEB', level: 'Current frontier' }, { label: 'Three.js', group: 'WEB', level: 'Realtime worlds' }, { label: 'C#', group: 'BUILD', level: 'Systems thinking' }, { label: 'Firebase', group: 'DATA', level: 'Product foundation' }, { label: 'Python', group: 'DATA', level: 'Research tools' }, { label: 'MQL', group: 'DATA', level: 'MT4 / MT5' }, { label: 'Figma', group: 'TOOLS', level: 'Visual planning' }, { label: 'Git', group: 'TOOLS', level: 'Ship safely' },
+];
+
+const INITIAL_AUDIO = { bass: 0, mid: 0, treble: 0, energy: 0, beatPulse: 0 };
 
 export default function PortfolioShell() {
   const audioRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
-  const sourceRef = useRef(null);
   const rafRef = useRef(null);
   const lastBeatRef = useRef(0);
-  const [theme, setTheme] = useState('dark');
+  const transitionTimerRef = useRef(null);
+  const [chapter, setChapter] = useState('boot');
   const [hasEntered, setHasEntered] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [activeProject, setActiveProject] = useState(null);
+  const [hoveredProject, setHoveredProject] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioData, setAudioData] = useState(initialAudio);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [audioData, setAudioData] = useState(INITIAL_AUDIO);
+  const [pointer, setPointer] = useState({ x: 0, y: 0 });
 
-  const audioSrc = useMemo(
-    () => `${BASE_PATH}/${theme === 'dark' ? 'music.mp3' : 'music2.mp3'}`,
-    [theme],
-  );
+  const currentIndex = CHAPTERS.findIndex((item) => item.id === chapter);
+  const currentChapter = CHAPTERS[currentIndex] || CHAPTERS[0];
+  const project = activeProject === null ? null : PROJECTS[activeProject];
+
+  const navigateTo = useCallback((nextId) => {
+    if (!nextId || nextId === chapter || isTransitioning) return;
+    setIsTransitioning(true);
+    transitionTimerRef.current = window.setTimeout(() => {
+      setChapter(nextId);
+      setActiveProject(null);
+      setHoveredProject(null);
+      setIsTransitioning(false);
+    }, 520);
+  }, [chapter, isTransitioning]);
+
+  const navigateBy = useCallback((direction) => {
+    if (!hasEntered) return;
+    const nextIndex = Math.max(1, Math.min(CHAPTERS.length - 1, currentIndex + direction));
+    navigateTo(CHAPTERS[nextIndex].id);
+  }, [currentIndex, hasEntered, navigateTo]);
+
+  useEffect(() => () => window.clearTimeout(transitionTimerRef.current), []);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem('neon-theme');
-    if (savedTheme === 'light' || savedTheme === 'dark') setTheme(savedTheme);
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem('neon-theme', theme);
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+    const handlePointer = (event) => setPointer({ x: (event.clientX / window.innerWidth) * 2 - 1, y: -(event.clientY / window.innerHeight) * 2 + 1 });
+    const handleKey = (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') { event.preventDefault(); navigateBy(1); }
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') { event.preventDefault(); navigateBy(-1); }
+      if (event.key === 'Escape') setActiveProject(null);
     };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const handleWheel = (event) => {
+      if (!hasEntered || isTransitioning || Math.abs(event.deltaY) < 28) return;
+      event.preventDefault();
+      navigateBy(event.deltaY > 0 ? 1 : -1);
+    };
+    window.addEventListener('pointermove', handlePointer, { passive: true });
+    window.addEventListener('keydown', handleKey);
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => { window.removeEventListener('pointermove', handlePointer); window.removeEventListener('keydown', handleKey); window.removeEventListener('wheel', handleWheel); };
+  }, [navigateBy, hasEntered, isTransitioning]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !isPlaying) return;
-    audio.pause();
-    audio.load();
-    audio.play().catch(() => setIsPlaying(false));
-  }, [audioSrc, isPlaying]);
-
-  useEffect(() => {
-    const bins = new Uint8Array(128);
+    const frequency = new Uint8Array(128);
     let lastUiUpdate = 0;
-
     const tick = (time) => {
-      const analyser = analyserRef.current;
-      if (analyser && time - lastUiUpdate > 32) {
-        analyser.getByteFrequencyData(bins);
-        const average = (start, end) => {
-          let total = 0;
-          for (let i = start; i < end; i += 1) total += bins[i] || 0;
-          return total / ((end - start) * 255);
-        };
-        const bass = average(1, 8);
-        const mid = average(8, 34);
-        const treble = average(34, 82);
-        const energy = bass * 0.5 + mid * 0.3 + treble * 0.2;
-        const beat = bass > 0.62 && time - lastBeatRef.current > 240 ? 1 : 0;
-        if (beat) lastBeatRef.current = time;
-        setAudioData({ bass, mid, treble, energy, beat });
+      if (analyserRef.current && time - lastUiUpdate > 32) {
+        analyserRef.current.getByteFrequencyData(frequency);
+        const average = (from, to) => frequency.slice(from, to).reduce((sum, value) => sum + value, 0) / ((to - from) * 255);
+        const bass = average(1, 8); const mid = average(8, 34); const treble = average(34, 82); const energy = bass * 0.5 + mid * 0.3 + treble * 0.2;
+        const beatPulse = bass > 0.61 && time - lastBeatRef.current > 240 ? 1 : 0;
+        if (beatPulse) lastBeatRef.current = time;
+        setAudioData({ bass, mid, treble, energy, beatPulse });
         lastUiUpdate = time;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
-
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
@@ -117,165 +105,61 @@ export default function PortfolioShell() {
   const activateAudio = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-
     try {
       if (!audioContextRef.current) {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
-        const context = new AudioContextClass();
-        const analyser = context.createAnalyser();
-        analyser.fftSize = 256;
-        analyser.smoothingTimeConstant = 0.82;
-        const source = context.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(context.destination);
-        audioContextRef.current = context;
-        analyserRef.current = analyser;
-        sourceRef.current = source;
+        const context = new AudioContextClass(); const analyser = context.createAnalyser();
+        analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.82;
+        const source = context.createMediaElementSource(audio); source.connect(analyser); analyser.connect(context.destination);
+        audioContextRef.current = context; analyserRef.current = analyser;
       }
-      await audioContextRef.current.resume();
-      await audio.play();
-      setIsPlaying(true);
-    } catch {
-    }
-  };
-
-  const handleEnter = async () => {
-    setHasEntered(true);
-    await activateAudio();
+      await audioContextRef.current.resume(); await audio.play(); setIsPlaying(true);
+    } catch { /* Audio is optional; the scene remains playable without it. */ }
   };
 
   const toggleAudio = async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      await activateAudio();
-    }
+    if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); } else await activateAudio();
   };
 
-  const toggleTheme = () => setTheme((value) => (value === 'dark' ? 'light' : 'dark'));
+  const enterExperience = async () => { setHasEntered(true); setChapter('hub'); await activateAudio(); };
+  const selectProject = (index) => { setActiveProject(index); setHoveredProject(index); if (chapter !== 'map') navigateTo('map'); };
+  const selectChapter = (id) => { if (id !== 'boot') { setHasEntered(true); navigateTo(id); } };
+  const chapterClass = `chapter-${chapter}`;
 
   return (
-    <div className={`site-shell theme-${theme} ${hasEntered ? 'is-entered' : ''}`}>
-      <ExperienceCanvas audioData={audioData} theme={theme} scrollProgress={scrollProgress} />
-      <audio ref={audioRef} src={audioSrc} loop preload="metadata" />
+    <div className={`game-shell ${chapterClass} ${hasEntered ? 'is-live' : 'is-booting'} ${isTransitioning ? 'is-transitioning' : ''}`}>
+      <ExperienceCanvas chapter={chapter} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={(item) => setHoveredProject(item ? item.index : null)} />
+      <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" />
+      <div className="screen-grain" aria-hidden="true" />
+      <div className="transition-shutter" aria-hidden="true"><span /><span /><span /></div>
 
-      {!hasEntered && (
-        <section className="intro-overlay" aria-label="Portfolio introduction">
-          <div className="intro-grid" />
-          <div className="intro-scanline" />
-          <div className="intro-core" aria-hidden="true">
-            <span className="intro-core-ring ring-one" />
-            <span className="intro-core-ring ring-two" />
-            <span className="intro-core-dot" />
-          </div>
-          <div className="intro-copy">
-            <p className="eyebrow">Digital portfolio / 2026</p>
-            <h1>Nguyễn Minh <span>Danh</span></h1>
-            <p className="intro-description">A developer building useful products with code, motion, and curiosity.</p>
-            <button className="enter-button" onClick={handleEnter} type="button">
-              <span>Enter the archive</span>
-              <span className="button-arrow">↗</span>
-            </button>
-            <p className="intro-hint">Click to start the experience &amp; audio</p>
-          </div>
-          <div className="intro-meta intro-meta-left">HUFLIT / IT STUDENT</div>
-          <div className="intro-meta intro-meta-right">10°N 106°E / VIETNAM</div>
-        </section>
-      )}
-
-      <header className="site-header">
-        <a className="brand-mark" href="#top" aria-label="Back to top">
-          <span className="brand-symbol">N</span>
-          <span>NEON ARCHIVE <small>/ DANH</small></span>
-        </a>
-        <nav className="site-nav" aria-label="Primary navigation">
-          <a href="#about">01 / About</a>
-          <a href="#work">02 / Work</a>
-          <a href="#contact">03 / Contact</a>
-        </nav>
-        <div className="header-tools">
-          <button className="tool-button" type="button" onClick={toggleAudio} aria-label={isPlaying ? 'Pause music' : 'Play music'}>
-            <span className={`sound-bars ${isPlaying ? 'is-playing' : ''}`}><i /><i /><i /><i /></span>
-            {isPlaying ? 'Sound on' : 'Sound off'}
-          </button>
-          <button className="tool-button theme-button" type="button" onClick={toggleTheme} aria-label="Toggle theme">
-            {theme === 'dark' ? '☼' : '◐'}
-          </button>
-        </div>
+      <header className="game-header">
+        <button className="game-brand" type="button" onClick={() => selectChapter('hub')}><span className="brand-cross">+</span><span>DANH <small>// SIGNAL RUNNER</small></span></button>
+        <div className="header-readout"><span className="live-dot" /> {currentChapter.code} / {currentChapter.label}</div>
+        <div className="header-controls"><button type="button" onClick={toggleAudio} className="hud-control"><span className={`mini-bars ${isPlaying ? 'playing' : ''}`}><i /><i /><i /></span>{isPlaying ? 'AUDIO LIVE' : 'AUDIO OFF'}</button><button type="button" className="hud-control" onClick={() => selectChapter('contact')}>CONTACT ↗</button></div>
       </header>
 
-      <main id="top">
-        <section className="hero-section section-frame">
-          <div className="hero-kicker"><span className="status-dot" /> Available for thoughtful digital work</div>
-          <div className="hero-layout">
-            <div className="hero-copy">
-              <p className="eyebrow">01 / Identity system</p>
-              <h2>Ideas become <em>alive</em> when they move.</h2>
-              <p className="hero-lede">I&apos;m Danh — an IT student and developer from Vietnam, crafting backend systems, mobile products, and digital experiences with a pulse.</p>
-              <div className="hero-actions">
-                <a className="primary-link" href="#work">Explore the work <span>↘</span></a>
-                <a className="text-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com</a>
-              </div>
-            </div>
-            <div className="hero-side-note"><span>Scroll to navigate</span><span className="vertical-line" /><span>Realtime experience</span></div>
-          </div>
-          <div className="hero-bottomline"><span>Nguyễn Minh Danh</span><span>Developer / Creator / Learner</span><span>Scroll 001 — 006</span></div>
-        </section>
+      <aside className="chapter-rail" aria-label="Chapter navigation">
+        <div className="rail-label">RUN / 2026</div>
+        {CHAPTERS.slice(1).map((item) => <button type="button" key={item.id} className={`rail-node ${chapter === item.id ? 'active' : ''}`} onClick={() => selectChapter(item.id)}><span>{item.code}</span><b>{item.label}</b></button>)}
+        <div className="rail-line"><span style={{ height: `${Math.max(4, (Math.max(0, currentIndex) / (CHAPTERS.length - 1)) * 100)}%` }} /></div>
+      </aside>
 
-        <section id="about" className="about-section section-frame content-section">
-          <div className="section-index">01 <span>About the operator</span></div>
-          <div className="about-grid">
-            <div>
-              <p className="eyebrow">A human behind the interface</p>
-              <h3>Curious by default.<br /><span>Precise by practice.</span></h3>
-            </div>
-            <div className="about-copy">
-              <p>I&apos;m currently studying IT at HUFLIT while building products that sit between engineering and visual communication. My favorite work happens when a solid system also feels unmistakably human.</p>
-              <div className="fact-grid">
-                <div><strong>03+</strong><span>Years learning code</span></div>
-                <div><strong>04</strong><span>Core disciplines</span></div>
-                <div><strong>∞</strong><span>Things left to explore</span></div>
-              </div>
-            </div>
-          </div>
-        </section>
+      {!hasEntered && <section className="boot-screen"><div className="boot-crosshair"><span /><span /><i /></div><div className="boot-copy"><p className="system-kicker">SIGNAL RUNNER / PORTFOLIO OS</p><h1>Find the<br /><em>signal.</em></h1><p className="boot-description">An interactive field guide to Nguyễn Minh Danh — developer, builder, and lifelong learner.</p><button className="boot-button" type="button" onClick={enterExperience}><span className="boot-key">ENTER</span><span>Wake the system</span><strong>↗</strong></button><p className="boot-note">Audio will begin after connection / Use ↑ ↓ to navigate</p></div><div className="boot-status"><span>CONNECTION: STANDBY</span><span>WEBGL: READY</span><span>10°N / 106°E</span></div></section>}
 
-        <section id="work" className="work-section section-frame content-section">
-          <div className="section-index">02 <span>Selected transmissions</span></div>
-          <div className="work-heading"><h3>Things I&apos;m <span>building</span></h3><p>Projects, experiments, and systems in progress.</p></div>
-          <div className="project-list">
-            {PROJECTS.map((project) => (
-              <article className="project-row" key={project.number} style={{ '--project-accent': project.accent }}>
-                <div className="project-number">{project.number}</div>
-                <div className="project-main"><p className="project-type">{project.type}</p><h4>{project.title}</h4><p className="project-description">{project.description}</p></div>
-                <div className="project-stack">{project.stack.map((item) => <span key={item}>{item}</span>)}</div>
-                <a className="project-link" href="https://github.com/babydanh" target="_blank" rel="noreferrer" aria-label={`View ${project.title} on GitHub`}>↗</a>
-              </article>
-            ))}
-          </div>
-        </section>
+      {hasEntered && <main className="game-main">
+        {chapter === 'hub' && <section className="chapter-panel hub-panel"><div className="panel-tag">01 / OPERATOR HUB</div><div className="hub-content"><div className="operator-copy"><p className="system-kicker">IDENTITY SIGNAL DETECTED</p><h1>Nguyễn Minh<br /><em>Danh</em></h1><p className="panel-lede">IT student at HUFLIT, developer of useful things, and a person who likes systems with a little soul.</p><div className="operator-meta"><span>ROLE<strong>Developer / Creator</strong></span><span>ORIGIN<strong>Vietnam / VN</strong></span><span>STATUS<strong className="cyan-text">Open to signals</strong></span></div><button className="text-action" type="button" onClick={() => navigateTo('map')}>Open the quest map <span>↘</span></button></div><div className="operator-card"><div className="card-corner" /><span className="card-code">OPERATOR / 001</span><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><div className="card-footer"><span>CORE ONLINE</span><span>01—04</span></div></div></div><div className="chapter-bottom"><span>MOVE WITH ARROW KEYS / SCROLL</span><span>HUB SIGNAL STABLE</span></div></section>}
 
-        <section className="skills-section section-frame content-section">
-          <div className="section-index">03 <span>Technical constellation</span></div>
-          <div className="skills-layout">
-            <div><p className="eyebrow">Current toolkit</p><h3>A stack with<br /><span>room to grow.</span></h3></div>
-            <div className="skill-cloud"><span>Dart</span><span>Flutter</span><span>C#</span><span>HTML / CSS</span><span>Firebase</span><span>Git</span><span>Figma</span><span>Python</span><span>Three.js</span><span>Curiosity</span></div>
-          </div>
-        </section>
+        {chapter === 'map' && <section className="chapter-panel map-panel"><div className="panel-tag">02 / QUEST MAP</div><div className="map-content"><div className="map-intro"><p className="system-kicker">SELECTED TRANSMISSIONS</p><h2>Choose a<br /><em>mission.</em></h2><p>Three signals from the current archive. Hover a node in the scene or select a dossier below.</p><div className="map-coordinates">LAT 10.8231 / LNG 106.6297<br />ARCHIVE DEPTH: 03 NODES</div></div><div className="mission-list">{PROJECTS.map((item, index) => <button type="button" key={item.title} className={`mission-row ${activeProject === index ? 'selected' : ''} ${hoveredProject === index ? 'hovered' : ''}`} onMouseEnter={() => setHoveredProject(index)} onMouseLeave={() => setHoveredProject(null)} onClick={() => setActiveProject(index)}><span className="mission-index" style={{ color: item.color }}>{item.code}</span><span className="mission-name"><small>{item.type}</small>{item.title}</span><span className="mission-status">{item.status}</span><span className="mission-arrow">↗</span></button>)}</div></div>{project && <div className="dossier"><div className="dossier-head"><span>DOSSIER / {project.code}</span><button type="button" onClick={() => setActiveProject(null)}>CLOSE ×</button></div><div className="dossier-body"><p className="system-kicker" style={{ color: project.color }}>{project.type}</p><h3>{project.title}</h3><p>{project.description}</p><div className="dossier-info"><span>ROLE<strong>{project.role}</strong></span><span>STACK<strong>{project.stack.join(' · ')}</strong></span></div><p className="dossier-signal">“{project.signal}”</p><a href="https://github.com/babydanh" target="_blank" rel="noreferrer" className="text-action">Open GitHub signal <span>↗</span></a></div></div>}<div className="chapter-bottom"><span>HOVER NODES / SELECT DOSSIER</span><span>MAP LINK: ACTIVE</span></div></section>}
 
-        <section id="contact" className="contact-section section-frame content-section">
-          <div className="contact-orbit" aria-hidden="true"><span /><span /><span /></div>
-          <div className="section-index">04 <span>Open channel</span></div>
-          <div className="contact-content"><p className="eyebrow">Let&apos;s make something with a pulse</p><h3>Have a signal?<br /><span>Send it my way.</span></h3><a className="contact-email" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div>
-          <div className="contact-links"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram</a></div>
-        </section>
-      </main>
+        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <div className={`skill-node node-${index % 5}`} key={skill.label}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></div>)}</div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
 
-      <footer className="site-footer"><span>© 2026 Nguyễn Minh Danh</span><span>Built with curiosity, code &amp; realtime motion</span><span>Vietnam / VN</span></footer>
+        {chapter === 'contact' && <section className="chapter-panel contact-panel"><div className="panel-tag">04 / FINAL SIGNAL</div><div className="contact-content"><div className="contact-copy"><p className="system-kicker">CHANNEL OPEN</p><h2>Send a<br /><em>signal.</em></h2><p>Have an idea, a project, or a good reason to build something? The channel is open.</p><a className="contact-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div><div className="transmission-gate"><div className="gate-ring ring-a" /><div className="gate-ring ring-b" /><div className="gate-core">TX</div><span className="gate-label">READY TO TRANSMIT</span></div></div><div className="social-row"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram ↗</a></div><div className="chapter-bottom"><span>END OF RUN / THANKS FOR EXPLORING</span><span>VN / 2026</span></div></section>}
+      </main>}
+
+      {hasEntered && <div className="nav-prompt"><button type="button" onClick={() => navigateBy(-1)} disabled={currentIndex <= 1}>↑</button><span>{currentChapter.code} / {String(CHAPTERS.length - 1).padStart(2, '0')}</span><button type="button" onClick={() => navigateBy(1)} disabled={currentIndex >= CHAPTERS.length - 1}>↓</button></div>}
+      <footer className="game-footer"><span>© 2026 NGUYỄN MINH DANH</span><span>REALTIME / INTERACTIVE / HUMAN-MADE</span><span>SCROLL TO RUN</span></footer>
     </div>
   );
 }
