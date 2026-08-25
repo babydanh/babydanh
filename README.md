@@ -28,7 +28,7 @@
       </ul>
     </td>
     <td width="50%" valign="top" align="center" border="0">
-      <img src="https://github-readme-stats.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight" width="95%" alt="Danh's GitHub Stats" />
+      <img src="https://github-readme-stats-fast.vercel.app/api?username=babydanh&show_icons=true&theme=tokyonight&hide_border=true" width="95%" alt="Danh's GitHub Stats" />
     </td>
   </tr>
 </table>
@@ -48,7 +48,7 @@
 <h2 align="center">Tech Stacks</h2>
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight" width="450" alt="Top Languages" />
+  <img src="https://github-readme-stats-fast.vercel.app/api/top-langs/?username=babydanh&layout=compact&theme=tokyonight&hide_border=true" width="450" alt="Top Languages" />
 </p>
 
 <p align="center">
