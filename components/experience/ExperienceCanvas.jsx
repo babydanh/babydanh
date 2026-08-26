@@ -23,7 +23,7 @@ function GalaxyField({ audioDataRef, pointerRef }) {
   const group = useRef(null);
   const material = useRef(null);
   const geometry = useMemo(() => {
-    const count = 1450;
+    const count = 950;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const color = new THREE.Color();
@@ -115,7 +115,7 @@ function SignalCore({ audioDataRef, active, pointerRef }) {
         <torusGeometry args={[1.46, 0.018, 8, 72]} />
         <meshBasicMaterial color="#00e5ff" transparent opacity={active ? 0.86 : 0.08} />
       </mesh>
-      <pointLight color="#00e5ff" intensity={active ? 2.4 + readAudio(audioDataRef).bass * 4 : 0.15} distance={5} />
+      
     </group>
   );
 }
@@ -171,7 +171,7 @@ function MissionNode({ position, color, active, selected, project, onSelect, onH
         <torusGeometry args={[0.72, selected ? 0.027 : 0.012, 8, 36]} />
         <meshBasicMaterial color={color} transparent opacity={selected ? 0.95 : active ? 0.45 : 0.12} />
       </mesh>
-      <pointLight color={color} intensity={selected ? 2.7 : active ? 0.8 : 0.08} distance={2.2} />
+      
     </group>
   );
 }
@@ -221,7 +221,7 @@ function LoadoutScene({ audioDataRef, active, pointerRef }) {
           <meshStandardMaterial color={index === 2 ? '#00e5ff' : '#a78bfa'} emissive={index === 2 ? '#00e5ff' : '#a78bfa'} emissiveIntensity={active ? 2.5 + readAudio(audioDataRef).energy * 2 : 0.2} />
         </mesh>
       ))}
-      <pointLight color="#7c5cff" intensity={active ? 2 + readAudio(audioDataRef).energy * 2 : 0.1} distance={4} />
+      
     </group>
   );
 }
@@ -240,7 +240,7 @@ function ContactScene({ audioDataRef, active }) {
       <mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[1.55, 0.06, 12, 72]} /><meshBasicMaterial color="#00e5ff" transparent opacity={active ? 0.75 : 0.06} /></mesh>
       <mesh rotation={[Math.PI / 2, 0, 0.35]}><torusGeometry args={[1.05, 0.025, 8, 72]} /><meshBasicMaterial color="#ff4d8d" transparent opacity={active ? 0.6 : 0.05} /></mesh>
       <mesh><circleGeometry args={[0.82, 48]} /><meshBasicMaterial color="#082330" transparent opacity={active ? 0.72 : 0.02} /></mesh>
-      <pointLight color="#00e5ff" intensity={active ? 3 + readAudio(audioDataRef).bass * 4 : 0.1} distance={4} />
+      
     </group>
   );
 }
@@ -272,7 +272,7 @@ function Scene({ chapter, audioDataRef, pointerRef, activeProject, onSelectProje
       <fog attach="fog" args={['#03070d', 5, 15]} />
       <ambientLight intensity={0.22} />
       <directionalLight position={[3, 4, 3]} color="#b8f4ff" intensity={0.75} />
-      <pointLight position={[-4, -2, 2]} color="#5638c7" intensity={1.6} distance={8} />
+      <pointLight position={[-4, -2, 2]} color="#5638c7" intensity={1.15} distance={8} />
       <GalaxyField audioDataRef={audioDataRef} pointerRef={pointerRef} />
       <group ref={group}>
         <HubScene audioDataRef={audioDataRef} pointerRef={pointerRef} active={chapter === 'hub'} />
@@ -288,7 +288,7 @@ export default function ExperienceCanvas({ chapter, audioDataRef, pointerRef, ac
   return (
     <div className="experience-canvas" aria-hidden="true">
       <div className="canvas-vignette" />
-      <Canvas camera={{ position: CHAPTER_CAMERA.boot.position, fov: 42 }} dpr={[1, 1.25]} frameloop="always" performance={{ min: 0.65, max: 1, debounce: 180 }} gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}>
+      <Canvas camera={{ position: CHAPTER_CAMERA.boot.position, fov: 42 }} dpr={[0.75, 1]} frameloop="always" performance={{ min: 0.5, max: 1, debounce: 220 }} gl={{ antialias: false, alpha: true, powerPreference: 'high-performance', stencil: false, depth: true }}>
         <Scene chapter={chapter} audioDataRef={audioDataRef} pointerRef={pointerRef} activeProject={activeProject} onSelectProject={onSelectProject} onHoverProject={onHoverProject} />
       </Canvas>
     </div>

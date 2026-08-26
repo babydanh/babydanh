@@ -136,9 +136,16 @@ export default function PortfolioShell() {
       if (analyserRef.current && time - lastAudioUpdate > 48) {
         analyserRef.current.getByteFrequencyData(frequency);
         const bass = average(1, 7); const mid = average(7, 20); const treble = average(20, 42); const energy = bass * 0.5 + mid * 0.3 + treble * 0.2;
-        const beatPulse = bass > 0.61 && time - lastBeatRef.current > 240 ? 1 : 0;
+        const beatPulse = bass > 0.61 && time - lastBeatRef.current > 280 ? 1 : 0;
         if (beatPulse) lastBeatRef.current = time;
-        audioDataRef.current = { bass, mid, treble, energy, beatPulse };
+        const previous = audioDataRef.current;
+        audioDataRef.current = {
+          bass: previous.bass * 0.72 + bass * 0.28,
+          mid: previous.mid * 0.72 + mid * 0.28,
+          treble: previous.treble * 0.72 + treble * 0.28,
+          energy: previous.energy * 0.76 + energy * 0.24,
+          beatPulse: beatPulse ? 1 : previous.beatPulse * 0.72,
+        };
         lastAudioUpdate = time;
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -155,7 +162,7 @@ export default function PortfolioShell() {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
         const context = new AudioContextClass(); const analyser = context.createAnalyser(); const gain = context.createGain();
-        analyser.fftSize = 128; analyser.smoothingTimeConstant = 0.86; gain.gain.value = 1.45;
+        analyser.fftSize = 128; analyser.smoothingTimeConstant = 0.9; gain.gain.value = volume * 1.05;
         const source = context.createMediaElementSource(audio); source.connect(gain); gain.connect(analyser); analyser.connect(context.destination);
         audioContextRef.current = context; analyserRef.current = analyser; gainRef.current = gain;
       }
@@ -170,7 +177,7 @@ export default function PortfolioShell() {
   const handleVolume = (event) => {
     const nextVolume = Number(event.target.value);
     setVolume(nextVolume);
-    if (gainRef.current) gainRef.current.gain.value = nextVolume * 1.75;
+    if (gainRef.current && audioContextRef.current) gainRef.current.gain.setTargetAtTime(nextVolume * 1.05, audioContextRef.current.currentTime, 0.015);
   };
 
   const enterExperience = async () => {
