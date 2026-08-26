@@ -45,8 +45,8 @@ export default function PortfolioShell() {
   const [selectedSkill, setSelectedSkill] = useState(2);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.82);
-  const [audioData, setAudioData] = useState(INITIAL_AUDIO);
-  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  const audioDataRef = useRef(INITIAL_AUDIO);
+  const pointerRef = useRef({ x: 0, y: 0 });
 
   const viewIndex = Math.max(0, VIEWS.findIndex((item) => item.id === view));
   const currentView = VIEWS[viewIndex] || VIEWS[0];
@@ -107,7 +107,7 @@ export default function PortfolioShell() {
   }, [hasEntered, navigateTo, viewIndex]);
 
   useEffect(() => {
-    const handlePointer = (event) => setPointer({ x: (event.clientX / window.innerWidth) * 2 - 1, y: -(event.clientY / window.innerHeight) * 2 + 1 });
+    const handlePointer = (event) => { pointerRef.current = { x: (event.clientX / window.innerWidth) * 2 - 1, y: -(event.clientY / window.innerHeight) * 2 + 1 }; };
     const handleKey = (event) => {
       if (event.key === 'ArrowRight' || event.key === 'PageDown') { event.preventDefault(); navigateBy(1); }
       if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); navigateBy(-1); }
@@ -125,17 +125,21 @@ export default function PortfolioShell() {
   }, [navigateBy, hasEntered, isTransitioning]);
 
   useEffect(() => {
-    const frequency = new Uint8Array(128);
-    let lastUiUpdate = 0;
+    const frequency = new Uint8Array(64);
+    let lastAudioUpdate = 0;
+    const average = (from, to) => {
+      let total = 0;
+      for (let index = from; index < to; index += 1) total += frequency[index] || 0;
+      return total / ((to - from) * 255);
+    };
     const tick = (time) => {
-      if (analyserRef.current && time - lastUiUpdate > 32) {
+      if (analyserRef.current && time - lastAudioUpdate > 48) {
         analyserRef.current.getByteFrequencyData(frequency);
-        const average = (from, to) => frequency.slice(from, to).reduce((sum, value) => sum + value, 0) / ((to - from) * 255);
-        const bass = average(1, 8); const mid = average(8, 34); const treble = average(34, 82); const energy = bass * 0.5 + mid * 0.3 + treble * 0.2;
+        const bass = average(1, 7); const mid = average(7, 20); const treble = average(20, 42); const energy = bass * 0.5 + mid * 0.3 + treble * 0.2;
         const beatPulse = bass > 0.61 && time - lastBeatRef.current > 240 ? 1 : 0;
         if (beatPulse) lastBeatRef.current = time;
-        setAudioData({ bass, mid, treble, energy, beatPulse });
-        lastUiUpdate = time;
+        audioDataRef.current = { bass, mid, treble, energy, beatPulse };
+        lastAudioUpdate = time;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -151,7 +155,7 @@ export default function PortfolioShell() {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
         const context = new AudioContextClass(); const analyser = context.createAnalyser(); const gain = context.createGain();
-        analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.82; gain.gain.value = 1.45;
+        analyser.fftSize = 128; analyser.smoothingTimeConstant = 0.86; gain.gain.value = 1.45;
         const source = context.createMediaElementSource(audio); source.connect(gain); gain.connect(analyser); analyser.connect(context.destination);
         audioContextRef.current = context; analyserRef.current = analyser; gainRef.current = gain;
       }
@@ -182,7 +186,7 @@ export default function PortfolioShell() {
   return (
     <div className={`portfolio-shell view-${view} ${hasEntered ? 'is-entered' : 'is-boot'} ${isLoaded ? 'is-ready' : 'is-loading'} ${isTransitioning ? 'is-transitioning' : ''} direction-${transitionDirection}`}>
       {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH / PORTFOLIO</span><span>LOADING EXPERIENCE</span></div><div className="preloader-orbit" aria-hidden="true"><i /><i /><i /></div><div className="preloader-copy"><p className="eyebrow">Next.js / Three.js / Web Audio</p><h1>Making the<br /><em>signal clear.</em></h1><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'PREPARING CONTENT' : 'READY TO ENTER'}</span></div></div><div className="preloader-bottom"><span>WEBGL READY</span><span>CONTENT FIRST</span><span>VN / 2026</span></div></section>}
-      <ExperienceCanvas chapter={hasEntered ? (transitionScene || currentView.scene) : 'hub'} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
+      <ExperienceCanvas chapter={hasEntered ? (transitionScene || currentView.scene) : 'hub'} audioDataRef={audioDataRef} pointerRef={pointerRef} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
       <div className="canvas-scrim" aria-hidden="true" />
       <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
       <div className="transition-layer" aria-hidden="true" />
