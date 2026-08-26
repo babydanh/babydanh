@@ -44,3 +44,27 @@
 
 /* Let the preserved Three.js scene breathe around the content without becoming a text collision layer. */
 .portfolio-shell .canvas-scrim{background:radial-gradient(circle at 76% 50%,rgba(0,229,255,.22),transparent 34%),linear-gradient(90deg,rgba(2,5,10,.76),rgba(2,5,10,.4) 30%,rgba(2,5,10,.06) 66%,rgba(2,5,10,.2)),linear-gradient(0deg,rgba(2,5,10,.48),transparent 34%,rgba(2,5,10,.12))}.portfolio-shell.view-work .canvas-scrim{background:radial-gradient(circle at 74% 52%,rgba(167,139,250,.26),transparent 36%),linear-gradient(90deg,rgba(2,5,10,.76),rgba(2,5,10,.38) 32%,rgba(2,5,10,.06) 68%,rgba(2,5,10,.18))}.portfolio-shell.view-about .canvas-scrim{background:radial-gradient(circle at 76% 48%,rgba(255,200,87,.2),transparent 35%),linear-gradient(90deg,rgba(2,5,10,.76),rgba(2,5,10,.4) 32%,rgba(2,5,10,.06) 68%,rgba(2,5,10,.18))}.portfolio-shell.view-contact .canvas-scrim{background:radial-gradient(circle at 74% 50%,rgba(255,77,141,.24),transparent 36%),linear-gradient(90deg,rgba(2,5,10,.76),rgba(2,5,10,.36) 32%,rgba(2,5,10,.05) 68%,rgba(2,5,10,.18))}.portfolio-shell .experience-canvas{opacity:1;filter:none;transition:opacity .7s ease,filter .7s ease}.portfolio-shell.is-transitioning .experience-canvas{opacity:1;filter:saturate(1.18) contrast(1.04) brightness(1.06)}.portfolio-shell .page-stage{max-width:100%}.portfolio-shell .page{will-change:transform,opacity}.portfolio-shell.view-work .project-card{background:rgba(5,13,22,.69)}.portfolio-shell.view-about .about-image img,.portfolio-shell.view-contact .contact-orbit{box-shadow:0 0 70px color-mix(in srgb,var(--accent) 12%,transparent)}
+
+/* Interaction guard: WebGL is visual-only; DOM controls always own pointer and touch input. */
+.portfolio-shell .experience-canvas,
+.portfolio-shell .canvas-scrim,
+.portfolio-shell .canvas-vignette{pointer-events:none}
+.portfolio-shell .site-header,
+.portfolio-shell .portfolio-main,
+.portfolio-shell .page-stage,
+.portfolio-shell .page button,
+.portfolio-shell .page a,
+.portfolio-shell .project-modal-backdrop,
+.portfolio-shell .project-modal{pointer-events:auto}
+.portfolio-shell button,
+.portfolio-shell a,
+.portfolio-shell input{touch-action:manipulation}
+.portfolio-shell.is-transitioning .site-header,
+.portfolio-shell.is-transitioning .portfolio-main{pointer-events:none}
+.portfolio-shell.is-transitioning .transition-status{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.portfolio-shell .experience-canvas{display:none}}
+
+/* Keep audio-reactive motion calm: no expensive backdrop/filter repaint during travel. */
+.portfolio-shell .transition-layer{backdrop-filter:none;filter:none}
+.portfolio-shell .canvas-vignette{will-change:auto}
+
