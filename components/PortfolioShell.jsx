@@ -35,9 +35,12 @@ export default function PortfolioShell() {
   const lastBeatRef = useRef(0);
   const transitionTimerRef = useRef(null);
   const [chapter, setChapter] = useState('boot');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeProject, setActiveProject] = useState(null);
+  const [selectedSkill, setSelectedSkill] = useState(2);
   const [hoveredProject, setHoveredProject] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.82);
@@ -66,6 +69,31 @@ export default function PortfolioShell() {
   }, [currentIndex, hasEntered, navigateTo]);
 
   useEffect(() => () => window.clearTimeout(transitionTimerRef.current), []);
+
+  useEffect(() => {
+    let mounted = true;
+    const startedAt = performance.now();
+    const avatar = new Image();
+    avatar.src = `${BASE_PATH}/avatar.jpg`;
+    const audio = new Audio(`${BASE_PATH}/music.mp3`);
+    audio.preload = 'metadata';
+    const assetsReady = Promise.allSettled([
+      avatar.decode ? avatar.decode().catch(() => undefined) : Promise.resolve(),
+      new Promise((resolve) => { audio.addEventListener('loadedmetadata', resolve, { once: true }); audio.addEventListener('error', resolve, { once: true }); }),
+      document.fonts?.ready || Promise.resolve(),
+    ]);
+    let frame;
+    const tick = async (time) => {
+      const elapsed = time - startedAt;
+      const timedProgress = Math.min(92, Math.round((elapsed / 1100) * 92));
+      if (mounted) setLoadProgress(timedProgress);
+      const ready = await Promise.race([assetsReady.then(() => true), new Promise((resolve) => window.setTimeout(() => resolve(true), 1350))]);
+      if (ready && elapsed > 850 && mounted) { setLoadProgress(100); window.setTimeout(() => mounted && setIsLoaded(true), 320); return; }
+      if (mounted) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => { mounted = false; cancelAnimationFrame(frame); };
+  }, []);
 
   useEffect(() => {
     const handlePointer = (event) => setPointer({ x: (event.clientX / window.innerWidth) * 2 - 1, y: -(event.clientY / window.innerHeight) * 2 + 1 });
@@ -130,13 +158,19 @@ export default function PortfolioShell() {
     if (gainRef.current) gainRef.current.gain.value = nextVolume * 1.75;
   };
 
-  const enterExperience = async () => { setHasEntered(true); setChapter('hub'); await activateAudio(); };
+  const enterExperience = async () => {
+    if (!isLoaded || isTransitioning) return;
+    setIsTransitioning(true);
+    await activateAudio();
+    transitionTimerRef.current = window.setTimeout(() => { setHasEntered(true); setChapter('hub'); setIsTransitioning(false); }, 820);
+  };
   const selectProject = (index) => { setActiveProject(index); setHoveredProject(index); if (chapter !== 'map') navigateTo('map'); };
   const selectChapter = (id) => { if (id !== 'boot') { setHasEntered(true); navigateTo(id); } };
   const chapterClass = `chapter-${chapter}`;
 
   return (
-    <div className={`game-shell ${chapterClass} ${hasEntered ? 'is-live' : 'is-booting'} ${isTransitioning ? 'is-transitioning' : ''}`}>
+        <div className={`game-shell ${chapterClass} ${hasEntered ? 'is-live' : 'is-booting'} ${isTransitioning ? 'is-transitioning' : ''} ${isLoaded ? 'is-ready' : 'is-loading'}`}>
+      {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH // SIGNAL RUNNER</span><span>INITIALIZING / 2026</span></div><div className="preloader-grid" aria-hidden="true"><i /><i /><i /><i /></div><div className="preloader-copy"><p className="system-kicker">PORTFOLIO OS / BOOT SEQUENCE</p><h1>Syncing<br /><em>signal.</em></h1><p>Preparing the interactive field guide.</p><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'CALIBRATING SCENE' : 'READY TO CONNECT'}</span></div></div><div className="preloader-bottom"><span>WEBGL / READY</span><span>ASSETS / {loadProgress >= 72 ? 'READY' : 'QUEUED'}</span><span>10°N / 106°E</span></div></section>}
       <ExperienceCanvas chapter={chapter} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={(item) => setHoveredProject(item ? item.index : null)} />
       <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" />
       <div className="screen-grain" aria-hidden="true" />
@@ -154,14 +188,14 @@ export default function PortfolioShell() {
         <div className="rail-line"><span style={{ height: `${Math.max(4, (Math.max(0, currentIndex) / (CHAPTERS.length - 1)) * 100)}%` }} /></div>
       </aside>
 
-      {!hasEntered && <section className="boot-screen"><div className="boot-crosshair"><span /><span /><i /></div><div className="boot-copy"><p className="system-kicker">SIGNAL RUNNER / PORTFOLIO OS</p><h1>Find the<br /><em>signal.</em></h1><p className="boot-description">An interactive field guide to Nguyễn Minh Danh — developer, builder, and lifelong learner.</p><button className="boot-button" type="button" onClick={enterExperience}><span className="boot-key">ENTER</span><span>Wake the system</span><strong>↗</strong></button><p className="boot-note">Audio will begin after connection / Use ↑ ↓ to navigate</p></div><div className="boot-status"><span>CONNECTION: STANDBY</span><span>WEBGL: READY</span><span>10°N / 106°E</span></div></section>}
+      {!hasEntered && <section className="boot-screen"><div className="boot-crosshair"><span /><span /><i /></div><div className="boot-copy"><p className="system-kicker">SIGNAL RUNNER / PORTFOLIO OS</p><h1>Find the<br /><em>signal.</em></h1><p className="boot-description">An interactive field guide to Nguyễn Minh Danh — developer, builder, and lifelong learner.</p><button className={`boot-button ${!isLoaded ? 'is-disabled' : ''}`} type="button" onClick={enterExperience} disabled={!isLoaded}><span className="boot-key">{isLoaded ? 'ENTER' : 'WAIT'}</span><span>{isLoaded ? 'Wake the system' : 'Calibrating scene'}</span><strong>↗</strong></button><p className="boot-note">Audio will begin after connection / Use ↑ ↓ to navigate</p></div><div className="boot-status"><span>CONNECTION: STANDBY</span><span>WEBGL: READY</span><span>10°N / 106°E</span></div></section>}
 
       {hasEntered && <main className="game-main">
         {chapter === 'hub' && <section className="chapter-panel hub-panel"><div className="panel-tag">01 / OPERATOR HUB</div><div className="hub-content"><div className="operator-copy"><p className="system-kicker">IDENTITY SIGNAL DETECTED</p><h1>Nguyễn Minh<br /><em>Danh</em></h1><p className="panel-lede">IT student at HUFLIT, developer of useful things, and a person who likes systems with a little soul.</p><div className="operator-meta"><span>ROLE<strong>Developer / Creator</strong></span><span>ORIGIN<strong>Vietnam / VN</strong></span><span>STATUS<strong className="cyan-text">Open to signals</strong></span></div><button className="text-action" type="button" onClick={() => navigateTo('map')}>Open the quest map <span>↘</span></button></div><div className="operator-card"><div className="card-corner" /><span className="card-code">OPERATOR / 001</span><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><div className="card-footer"><span>CORE ONLINE</span><span>01—04</span></div></div></div><div className="chapter-bottom"><span>MOVE WITH ARROW KEYS / SCROLL</span><span>HUB SIGNAL STABLE</span></div></section>}
 
         {chapter === 'map' && <section className="chapter-panel map-panel"><div className="panel-tag">02 / QUEST MAP</div><div className="map-content"><div className="map-intro"><p className="system-kicker">SELECTED TRANSMISSIONS</p><h2>Choose a<br /><em>mission.</em></h2><p>Three signals from the current archive. Hover a node in the scene or select a dossier below.</p><div className="map-coordinates">LAT 10.8231 / LNG 106.6297<br />ARCHIVE DEPTH: 03 NODES</div></div><div className="mission-list">{PROJECTS.map((item, index) => <button type="button" key={item.title} className={`mission-row ${activeProject === index ? 'selected' : ''} ${hoveredProject === index ? 'hovered' : ''}`} onMouseEnter={() => setHoveredProject(index)} onMouseLeave={() => setHoveredProject(null)} onClick={() => setActiveProject(index)}><span className="mission-index" style={{ color: item.color }}>{item.code}</span><span className="mission-name"><small>{item.type}</small>{item.title}</span><span className="mission-status">{item.status}</span><span className="mission-arrow">↗</span></button>)}</div></div>{project && <div className="dossier"><div className="dossier-head"><span>DOSSIER / {project.code}</span><button type="button" onClick={() => setActiveProject(null)}>CLOSE ×</button></div><div className="dossier-body"><p className="system-kicker" style={{ color: project.color }}>{project.type}</p><h3>{project.title}</h3><p>{project.description}</p><div className="dossier-info"><span>ROLE<strong>{project.role}</strong></span><span>STACK<strong>{project.stack.join(' · ')}</strong></span></div><p className="dossier-signal">“{project.signal}”</p><a href="https://github.com/babydanh" target="_blank" rel="noreferrer" className="text-action">Open GitHub signal <span>↗</span></a></div></div>}<div className="chapter-bottom"><span>HOVER NODES / SELECT DOSSIER</span><span>MAP LINK: ACTIVE</span></div></section>}
 
-        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <div className={`skill-node skill-${index}`} key={skill.label}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></div>)}</div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
+        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <button type="button" className={`skill-node skill-${index} ${selectedSkill === index ? 'selected' : ''}`} key={skill.label} onClick={() => setSelectedSkill(index)} aria-label={`Select ${skill.label}`} aria-pressed={selectedSkill === index}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></button>)}</div><div className="skill-inspector"><span className="inspector-label">SELECTED MODULE / {String(selectedSkill + 1).padStart(2, '0')}</span><strong>{SKILLS[selectedSkill].label}</strong><small>{SKILLS[selectedSkill].group} / {SKILLS[selectedSkill].level}</small><i /></div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
 
         {chapter === 'contact' && <section className="chapter-panel contact-panel"><div className="panel-tag">04 / FINAL SIGNAL</div><div className="contact-content"><div className="contact-copy"><p className="system-kicker">CHANNEL OPEN</p><h2>Send a<br /><em>signal.</em></h2><p>Have an idea, a project, or a good reason to build something? The channel is open.</p><a className="contact-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div><div className="transmission-gate"><div className="gate-ring ring-a" /><div className="gate-ring ring-b" /><div className="gate-core">TX</div><span className="gate-label">READY TO TRANSMIT</span></div></div><div className="social-row"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram ↗</a></div><div className="chapter-bottom"><span>END OF RUN / THANKS FOR EXPLORING</span><span>VN / 2026</span></div></section>}
       </main>}
