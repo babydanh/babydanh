@@ -6,22 +6,21 @@ import dynamic from 'next/dynamic';
 const ExperienceCanvas = dynamic(() => import('./experience/ExperienceCanvas'), { ssr: false });
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
-const CHAPTERS = [
-  { id: 'boot', code: '00', label: 'Boot sequence' },
-  { id: 'hub', code: '01', label: 'Operator hub' },
-  { id: 'map', code: '02', label: 'Quest map' },
-  { id: 'loadout', code: '03', label: 'Skill loadout' },
-  { id: 'contact', code: '04', label: 'Final signal' },
+const VIEWS = [
+  { id: 'home', label: 'Home', scene: 'hub' },
+  { id: 'work', label: 'Selected work', scene: 'map' },
+  { id: 'about', label: 'About', scene: 'loadout' },
+  { id: 'contact', label: 'Contact', scene: 'contact' },
 ];
 
 const PROJECTS = [
-  { title: 'RaoVat24H', type: 'Mobile marketplace', status: 'In development', color: '#00e5ff', code: 'RV-24', description: 'A mobile marketplace concept focused on fast discovery, clean flows, and a useful buying experience.', role: 'Product / Mobile development', stack: ['Flutter', 'Dart', 'Firebase'], signal: 'A practical product with a human pace.' },
-  { title: 'Neon Archive', type: 'Realtime portfolio', status: 'Active signal', color: '#a78bfa', code: 'NA-26', description: 'This interactive portfolio system: a realtime world where code, motion, sound, and identity meet.', role: 'Creative development / Frontend', stack: ['Next.js', 'Three.js', 'Web Audio'], signal: 'A portfolio that behaves like a world.' },
-  { title: 'EA Research Lab', type: 'Strategy research', status: 'Exploring', color: '#ff4d8d', code: 'EA-MT', description: 'Researching disciplined strategy design and automation concepts for MT4 and MT5.', role: 'Research / Systems thinking', stack: ['MQL', 'Python', 'MT4 / MT5'], signal: 'Turning curiosity into structured experiments.' },
+  { title: 'RaoVat24H', type: 'Mobile marketplace', status: 'In development', color: '#00e5ff', code: '01', description: 'A mobile marketplace concept focused on fast discovery, clean flows, and a useful buying experience.', role: 'Product / Mobile development', stack: ['Flutter', 'Dart', 'Firebase'], signal: 'A practical product with a human pace.' },
+  { title: 'Neon Archive', type: 'Interactive portfolio', status: 'Active build', color: '#a78bfa', code: '02', description: 'This portfolio system: a realtime world where code, motion, sound, and identity meet without hiding the work.', role: 'Creative development / Frontend', stack: ['Next.js', 'Three.js', 'Web Audio'], signal: 'A portfolio should feel like a point of view.' },
+  { title: 'EA Research Lab', type: 'Strategy research', status: 'Exploring', color: '#ff4d8d', code: '03', description: 'Researching disciplined strategy design and automation concepts for MT4 and MT5.', role: 'Research / Systems thinking', stack: ['MQL', 'Python', 'MT4 / MT5'], signal: 'Turning curiosity into structured experiments.' },
 ];
 
 const SKILLS = [
-  { label: 'Dart', group: 'BUILD', level: 'Core language' }, { label: 'Flutter', group: 'BUILD', level: 'Mobile systems' }, { label: 'Next.js', group: 'WEB', level: 'Current frontier' }, { label: 'Three.js', group: 'WEB', level: 'Realtime worlds' }, { label: 'C#', group: 'BUILD', level: 'Systems thinking' }, { label: 'Firebase', group: 'DATA', level: 'Product foundation' }, { label: 'Python', group: 'DATA', level: 'Research tools' }, { label: 'MQL', group: 'DATA', level: 'MT4 / MT5' }, { label: 'Figma', group: 'TOOLS', level: 'Visual planning' }, { label: 'Git', group: 'TOOLS', level: 'Ship safely' },
+  ['Dart', 'Core language'], ['Flutter', 'Mobile systems'], ['Next.js', 'Web architecture'], ['Three.js', 'Realtime worlds'], ['C#', 'Systems thinking'], ['Firebase', 'Product foundation'], ['Python', 'Research tools'], ['MQL', 'MT4 / MT5'], ['Figma', 'Visual planning'], ['Git', 'Ship safely'],
 ];
 
 const INITIAL_AUDIO = { bass: 0, mid: 0, treble: 0, energy: 0, beatPulse: 0 };
@@ -34,41 +33,21 @@ export default function PortfolioShell() {
   const rafRef = useRef(null);
   const lastBeatRef = useRef(0);
   const transitionTimerRef = useRef(null);
-  const [chapter, setChapter] = useState('boot');
+  const [view, setView] = useState('home');
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeProject, setActiveProject] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(2);
-  const [hoveredProject, setHoveredProject] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.82);
   const [audioData, setAudioData] = useState(INITIAL_AUDIO);
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
 
-  const currentIndex = CHAPTERS.findIndex((item) => item.id === chapter);
-  const currentChapter = CHAPTERS[currentIndex] || CHAPTERS[0];
+  const viewIndex = Math.max(0, VIEWS.findIndex((item) => item.id === view));
+  const currentView = VIEWS[viewIndex] || VIEWS[0];
   const project = activeProject === null ? null : PROJECTS[activeProject];
-
-  const navigateTo = useCallback((nextId) => {
-    if (!nextId || nextId === chapter || isTransitioning) return;
-    setIsTransitioning(true);
-    transitionTimerRef.current = window.setTimeout(() => {
-      setChapter(nextId);
-      setActiveProject(null);
-      setHoveredProject(null);
-      setIsTransitioning(false);
-    }, 520);
-  }, [chapter, isTransitioning]);
-
-  const navigateBy = useCallback((direction) => {
-    if (!hasEntered) return;
-    const nextIndex = Math.max(1, Math.min(CHAPTERS.length - 1, currentIndex + direction));
-    navigateTo(CHAPTERS[nextIndex].id);
-  }, [currentIndex, hasEntered, navigateTo]);
-
-  useEffect(() => () => window.clearTimeout(transitionTimerRef.current), []);
 
   useEffect(() => {
     let mounted = true;
@@ -85,21 +64,42 @@ export default function PortfolioShell() {
     let frame;
     const tick = async (time) => {
       const elapsed = time - startedAt;
-      const timedProgress = Math.min(92, Math.round((elapsed / 1100) * 92));
-      if (mounted) setLoadProgress(timedProgress);
-      const ready = await Promise.race([assetsReady.then(() => true), new Promise((resolve) => window.setTimeout(() => resolve(true), 1350))]);
-      if (ready && elapsed > 850 && mounted) { setLoadProgress(100); window.setTimeout(() => mounted && setIsLoaded(true), 320); return; }
+      if (mounted) setLoadProgress(Math.min(92, Math.round((elapsed / 1200) * 92)));
+      await Promise.race([assetsReady, new Promise((resolve) => window.setTimeout(resolve, 1350))]);
+      if (mounted && elapsed > 850) {
+        setLoadProgress(100);
+        window.setTimeout(() => mounted && setIsLoaded(true), 360);
+        return;
+      }
       if (mounted) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => { mounted = false; cancelAnimationFrame(frame); };
   }, []);
 
+  useEffect(() => () => window.clearTimeout(transitionTimerRef.current), []);
+
+  const navigateTo = useCallback((nextView) => {
+    if (!nextView || nextView === view || isTransitioning) return;
+    setIsTransitioning(true);
+    transitionTimerRef.current = window.setTimeout(() => {
+      setView(nextView);
+      setActiveProject(null);
+      setIsTransitioning(false);
+    }, 430);
+  }, [view, isTransitioning]);
+
+  const navigateBy = useCallback((direction) => {
+    if (!hasEntered) return;
+    const nextIndex = Math.max(0, Math.min(VIEWS.length - 1, viewIndex + direction));
+    navigateTo(VIEWS[nextIndex].id);
+  }, [hasEntered, navigateTo, viewIndex]);
+
   useEffect(() => {
     const handlePointer = (event) => setPointer({ x: (event.clientX / window.innerWidth) * 2 - 1, y: -(event.clientY / window.innerHeight) * 2 + 1 });
     const handleKey = (event) => {
-      if (event.key === 'ArrowDown' || event.key === 'PageDown') { event.preventDefault(); navigateBy(1); }
-      if (event.key === 'ArrowUp' || event.key === 'PageUp') { event.preventDefault(); navigateBy(-1); }
+      if (event.key === 'ArrowRight' || event.key === 'PageDown') { event.preventDefault(); navigateBy(1); }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); navigateBy(-1); }
       if (event.key === 'Escape') setActiveProject(null);
     };
     const handleWheel = (event) => {
@@ -145,7 +145,7 @@ export default function PortfolioShell() {
         audioContextRef.current = context; analyserRef.current = analyser; gainRef.current = gain;
       }
       await audioContextRef.current.resume(); await audio.play(); setIsPlaying(true);
-    } catch { /* Audio is optional; the scene remains playable without it. */ }
+    } catch { /* Audio is optional; the portfolio remains fully usable without it. */ }
   };
 
   const toggleAudio = async () => {
@@ -162,46 +162,41 @@ export default function PortfolioShell() {
     if (!isLoaded || isTransitioning) return;
     setIsTransitioning(true);
     await activateAudio();
-    transitionTimerRef.current = window.setTimeout(() => { setHasEntered(true); setChapter('hub'); setIsTransitioning(false); }, 820);
+    transitionTimerRef.current = window.setTimeout(() => { setHasEntered(true); setView('home'); setIsTransitioning(false); }, 760);
   };
-  const selectProject = (index) => { setActiveProject(index); setHoveredProject(index); if (chapter !== 'map') navigateTo('map'); };
-  const selectChapter = (id) => { if (id !== 'boot') { setHasEntered(true); navigateTo(id); } };
-  const chapterClass = `chapter-${chapter}`;
+
+  const selectProject = (index) => setActiveProject(index);
+  const selectView = (id) => { if (id !== 'home' || hasEntered) { setHasEntered(true); navigateTo(id); } };
 
   return (
-        <div className={`game-shell ${chapterClass} ${hasEntered ? 'is-live' : 'is-booting'} ${isTransitioning ? 'is-transitioning' : ''} ${isLoaded ? 'is-ready' : 'is-loading'}`}>
-      {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH // SIGNAL RUNNER</span><span>INITIALIZING / 2026</span></div><div className="preloader-grid" aria-hidden="true"><i /><i /><i /><i /></div><div className="preloader-copy"><p className="system-kicker">PORTFOLIO OS / BOOT SEQUENCE</p><h1>Syncing<br /><em>signal.</em></h1><p>Preparing the interactive field guide.</p><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'CALIBRATING SCENE' : 'READY TO CONNECT'}</span></div></div><div className="preloader-bottom"><span>WEBGL / READY</span><span>ASSETS / {loadProgress >= 72 ? 'READY' : 'QUEUED'}</span><span>10°N / 106°E</span></div></section>}
-      <ExperienceCanvas chapter={chapter} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={(item) => setHoveredProject(item ? item.index : null)} />
-      <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" />
-      <div className="screen-grain" aria-hidden="true" />
-      <div className="transition-shutter" aria-hidden="true"><span /><span /><span /></div>
+    <div className={`portfolio-shell view-${view} ${hasEntered ? 'is-entered' : 'is-boot'} ${isLoaded ? 'is-ready' : 'is-loading'} ${isTransitioning ? 'is-transitioning' : ''}`}>
+      {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH / PORTFOLIO</span><span>LOADING EXPERIENCE</span></div><div className="preloader-orbit" aria-hidden="true"><i /><i /><i /></div><div className="preloader-copy"><p className="eyebrow">Next.js / Three.js / Web Audio</p><h1>Making the<br /><em>signal clear.</em></h1><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'PREPARING CONTENT' : 'READY TO ENTER'}</span></div></div><div className="preloader-bottom"><span>WEBGL READY</span><span>CONTENT FIRST</span><span>VN / 2026</span></div></section>}
+      <ExperienceCanvas chapter={hasEntered ? currentView.scene : 'hub'} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
+      <div className="canvas-scrim" aria-hidden="true" />
+      <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+      <div className="transition-layer" aria-hidden="true" />
 
-      <header className="game-header">
-        <button className="game-brand" type="button" onClick={() => selectChapter('hub')}><span className="brand-cross">+</span><span>DANH <small>// SIGNAL RUNNER</small></span></button>
-        <div className="header-readout"><span className="live-dot" /> {currentChapter.code} / {currentChapter.label}</div>
-        <div className="header-controls"><button type="button" onClick={toggleAudio} className="hud-control"><span className={`mini-bars ${isPlaying ? 'playing' : ''}`}><i /><i /><i /></span>{isPlaying ? 'AUDIO LIVE' : 'AUDIO OFF'}</button><label className="volume-control"><span>VOL</span><input aria-label="Audio volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolume} /></label><button type="button" onClick={() => selectChapter('contact')} className="hud-control">CONTACT ↗</button></div>
+      <header className="site-header">
+        <button className="site-brand" type="button" onClick={() => selectView('home')}><span className="brand-mark">+</span><span><b>DANH</b><small>CREATIVE DEVELOPER</small></span></button>
+        <nav className="site-nav" aria-label="Primary navigation">{VIEWS.map((item, index) => <button type="button" key={item.id} className={view === item.id ? 'active' : ''} onClick={() => selectView(item.id)}><span>0{index + 1}</span>{item.label}</button>)}</nav>
+        <div className="header-tools"><button type="button" className="audio-toggle" onClick={toggleAudio} aria-label={isPlaying ? 'Pause music' : 'Play music'}><span className={`audio-bars ${isPlaying ? 'playing' : ''}`}><i /><i /><i /></span><span>{isPlaying ? 'Sound on' : 'Sound off'}</span></button><label className="volume-control"><span>VOL</span><input aria-label="Audio volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolume} /></label></div>
       </header>
 
-      <aside className="chapter-rail" aria-label="Chapter navigation">
-        <div className="rail-label">RUN / 2026</div>
-        {CHAPTERS.slice(1).map((item) => <button type="button" key={item.id} className={`rail-node ${chapter === item.id ? 'active' : ''}`} onClick={() => selectChapter(item.id)}><span>{item.code}</span><b>{item.label}</b></button>)}
-        <div className="rail-line"><span style={{ height: `${Math.max(4, (Math.max(0, currentIndex) / (CHAPTERS.length - 1)) * 100)}%` }} /></div>
-      </aside>
+      {!hasEntered && <section className="boot-overlay"><div className="boot-copy"><p className="eyebrow">A portfolio in motion</p><h2>Build with<br /><em>curiosity.</em></h2><p className="boot-lede">I&apos;m Nguyễn Minh Danh — an IT student and developer making useful things with code, motion and a little soul.</p><button className="enter-button" type="button" onClick={enterExperience} disabled={!isLoaded}><span>{isLoaded ? 'ENTER' : 'WAIT'}</span><b>{isLoaded ? 'Explore the portfolio' : 'Preparing the experience'}</b><strong>↗</strong></button><p className="boot-hint">Click to enter / sound begins with your permission</p></div><div className="boot-footer"><span>INTERACTIVE PORTFOLIO</span><span>SCROLL OR USE ARROW KEYS</span></div></section>}
 
-      {!hasEntered && <section className="boot-screen"><div className="boot-crosshair"><span /><span /><i /></div><div className="boot-copy"><p className="system-kicker">SIGNAL RUNNER / PORTFOLIO OS</p><h1>Find the<br /><em>signal.</em></h1><p className="boot-description">An interactive field guide to Nguyễn Minh Danh — developer, builder, and lifelong learner.</p><button className={`boot-button ${!isLoaded ? 'is-disabled' : ''}`} type="button" onClick={enterExperience} disabled={!isLoaded}><span className="boot-key">{isLoaded ? 'ENTER' : 'WAIT'}</span><span>{isLoaded ? 'Wake the system' : 'Calibrating scene'}</span><strong>↗</strong></button><p className="boot-note">Audio will begin after connection / Use ↑ ↓ to navigate</p></div><div className="boot-status"><span>CONNECTION: STANDBY</span><span>WEBGL: READY</span><span>10°N / 106°E</span></div></section>}
+      {hasEntered && <main className="portfolio-main"><div className="page-stage">
+        {view === 'home' && <section className="page home-page" aria-labelledby="home-title"><div className="page-kicker"><span>01 / HOME</span><i /> <span>OPEN TO GOOD WORK</span></div><div className="home-grid"><div className="home-copy"><p className="eyebrow">Developer / Creator / HUFLIT</p><h1 id="home-title">Nguyễn Minh<br /><em>Danh.</em></h1><p className="lede">I design and build digital experiences where the interface feels as considered as the idea behind it.</p><div className="action-row"><button className="primary-action" type="button" onClick={() => navigateTo('work')}>View selected work <span>↗</span></button><button className="quiet-action" type="button" onClick={() => navigateTo('about')}>More about me <span>→</span></button></div><div className="home-facts"><span><b>01</b> Mobile systems</span><span><b>02</b> Realtime worlds</span><span><b>03</b> Curious by default</span></div></div><div className="home-visual"><div className="portrait-card"><span className="card-label">CURRENT SIGNAL / 001</span><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><div className="portrait-footer"><span>AVAILABLE FOR BUILDING</span><span>VN</span></div></div><div className="visual-caption">A person behind<br /><em>the interface.</em></div></div></div></section>}
 
-      {hasEntered && <main className="game-main">
-        {chapter === 'hub' && <section className="chapter-panel hub-panel"><div className="panel-tag">01 / OPERATOR HUB</div><div className="hub-content"><div className="operator-copy"><p className="system-kicker">IDENTITY SIGNAL DETECTED</p><h1>Nguyễn Minh<br /><em>Danh</em></h1><p className="panel-lede">IT student at HUFLIT, developer of useful things, and a person who likes systems with a little soul.</p><div className="operator-meta"><span>ROLE<strong>Developer / Creator</strong></span><span>ORIGIN<strong>Vietnam / VN</strong></span><span>STATUS<strong className="cyan-text">Open to signals</strong></span></div><button className="text-action" type="button" onClick={() => navigateTo('map')}>Open the quest map <span>↘</span></button></div><div className="operator-card"><div className="card-corner" /><span className="card-code">OPERATOR / 001</span><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><div className="card-footer"><span>CORE ONLINE</span><span>01—04</span></div></div></div><div className="chapter-bottom"><span>MOVE WITH ARROW KEYS / SCROLL</span><span>HUB SIGNAL STABLE</span></div></section>}
+        {view === 'work' && <section className="page work-page" aria-labelledby="work-title"><div className="page-kicker"><span>02 / SELECTED WORK</span><i /><span>PROJECTS WITH A POINT OF VIEW</span></div><div className="section-heading"><div><p className="eyebrow">A small archive</p><h2 id="work-title">Things I&apos;m<br /><em>building.</em></h2></div><p className="section-note">A few experiments, products and systems from the current orbit. Select one to inspect the thinking behind it.</p></div><div className="project-grid">{PROJECTS.map((item, index) => <button type="button" className={`project-card project-${index + 1}`} key={item.title} onClick={() => selectProject(index)}><span className="project-number" style={{ color: item.color }}>0{item.code}</span><span className="project-type">{item.type}</span><strong>{item.title}</strong><p>{item.description}</p><span className="project-footer"><small>{item.status}</small><b>Open case ↗</b></span></button>)}</div></section>}
 
-        {chapter === 'map' && <section className="chapter-panel map-panel"><div className="panel-tag">02 / QUEST MAP</div><div className="map-content"><div className="map-intro"><p className="system-kicker">SELECTED TRANSMISSIONS</p><h2>Choose a<br /><em>mission.</em></h2><p>Three signals from the current archive. Hover a node in the scene or select a dossier below.</p><div className="map-coordinates">LAT 10.8231 / LNG 106.6297<br />ARCHIVE DEPTH: 03 NODES</div></div><div className="mission-list">{PROJECTS.map((item, index) => <button type="button" key={item.title} className={`mission-row ${activeProject === index ? 'selected' : ''} ${hoveredProject === index ? 'hovered' : ''}`} onMouseEnter={() => setHoveredProject(index)} onMouseLeave={() => setHoveredProject(null)} onClick={() => setActiveProject(index)}><span className="mission-index" style={{ color: item.color }}>{item.code}</span><span className="mission-name"><small>{item.type}</small>{item.title}</span><span className="mission-status">{item.status}</span><span className="mission-arrow">↗</span></button>)}</div></div>{project && <div className="dossier"><div className="dossier-head"><span>DOSSIER / {project.code}</span><button type="button" onClick={() => setActiveProject(null)}>CLOSE ×</button></div><div className="dossier-body"><p className="system-kicker" style={{ color: project.color }}>{project.type}</p><h3>{project.title}</h3><p>{project.description}</p><div className="dossier-info"><span>ROLE<strong>{project.role}</strong></span><span>STACK<strong>{project.stack.join(' · ')}</strong></span></div><p className="dossier-signal">“{project.signal}”</p><a href="https://github.com/babydanh" target="_blank" rel="noreferrer" className="text-action">Open GitHub signal <span>↗</span></a></div></div>}<div className="chapter-bottom"><span>HOVER NODES / SELECT DOSSIER</span><span>MAP LINK: ACTIVE</span></div></section>}
+        {view === 'about' && <section className="page about-page" aria-labelledby="about-title"><div className="page-kicker"><span>03 / ABOUT</span><i /><span>THE PERSON BEHIND THE WORK</span></div><div className="about-grid"><div className="about-image"><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><span className="image-stamp">DANH / 001</span></div><div className="about-copy"><p className="eyebrow">A builder in progress</p><h2 id="about-title">Learning by<br /><em>making.</em></h2><p className="lede">I&apos;m an IT student at HUFLIT who enjoys turning a blank screen into something useful, expressive and a little unexpected.</p><p className="body-copy">My current orbit moves between Flutter products, frontend systems, realtime 3D and strategy research. I care about clear interfaces, honest experiments and shipping the next version.</p><div className="skill-list">{SKILLS.map(([name, detail], index) => <button type="button" key={name} className={selectedSkill === index ? 'selected' : ''} onClick={() => setSelectedSkill(index)}><span>{name}</span><small>{detail}</small></button>)}</div><div className="skill-readout"><span>SELECTED SKILL</span><strong>{SKILLS[selectedSkill][0]}</strong><small>{SKILLS[selectedSkill][1]}</small></div></div></div></section>}
 
-        {chapter === 'loadout' && <section className="chapter-panel loadout-panel"><div className="panel-tag">03 / SKILL LOADOUT</div><div className="loadout-content"><div className="loadout-copy"><p className="system-kicker">CURRENT EQUIPMENT</p><h2>Build with<br /><em>curiosity.</em></h2><p>The tools change. The habit stays: learn, make, test, improve.</p></div><div className="skill-tree">{SKILLS.map((skill, index) => <button type="button" className={`skill-node skill-${index} ${selectedSkill === index ? 'selected' : ''}`} key={skill.label} onClick={() => setSelectedSkill(index)} aria-label={`Select ${skill.label}`} aria-pressed={selectedSkill === index}><span className="node-dot" /><span className="node-text"><b>{skill.label}</b><small>{skill.group} / {skill.level}</small></span></button>)}</div><div className="skill-inspector"><span className="inspector-label">SELECTED MODULE / {String(selectedSkill + 1).padStart(2, '0')}</span><strong>{SKILLS[selectedSkill].label}</strong><small>{SKILLS[selectedSkill].group} / {SKILLS[selectedSkill].level}</small><i /></div></div><div className="chapter-bottom"><span>LOADOUT / 10 ACTIVE SKILLS</span><span>SYNC RATE: {Math.round(72 + audioData.energy * 20)}%</span></div></section>}
+        {view === 'contact' && <section className="page contact-page" aria-labelledby="contact-title"><div className="page-kicker"><span>04 / CONTACT</span><i /><span>THE CHANNEL IS OPEN</span></div><div className="contact-grid"><div className="contact-copy"><p className="eyebrow">Have an idea?</p><h2 id="contact-title">Let&apos;s make<br /><em>something real.</em></h2><p className="lede">Good products start with a clear question. Send me a signal and let&apos;s see where it leads.</p><a className="email-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div><div className="contact-orbit"><div className="contact-ring ring-one" /><div className="contact-ring ring-two" /><div className="contact-core">HI</div><span>READY TO CONNECT</span></div></div><div className="social-links"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram ↗</a></div></section>}
+      </div></main>}
 
-        {chapter === 'contact' && <section className="chapter-panel contact-panel"><div className="panel-tag">04 / FINAL SIGNAL</div><div className="contact-content"><div className="contact-copy"><p className="system-kicker">CHANNEL OPEN</p><h2>Send a<br /><em>signal.</em></h2><p>Have an idea, a project, or a good reason to build something? The channel is open.</p><a className="contact-link" href="mailto:Macter.970@gmail.com">Macter.970@gmail.com <span>↗</span></a></div><div className="transmission-gate"><div className="gate-ring ring-a" /><div className="gate-ring ring-b" /><div className="gate-core">TX</div><span className="gate-label">READY TO TRANSMIT</span></div></div><div className="social-row"><a href="https://github.com/babydanh" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.facebook.com/danh.nguyenminh.777" target="_blank" rel="noreferrer">Facebook ↗</a><a href="https://www.instagram.com/danh.nguyenminh.777/" target="_blank" rel="noreferrer">Instagram ↗</a></div><div className="chapter-bottom"><span>END OF RUN / THANKS FOR EXPLORING</span><span>VN / 2026</span></div></section>}
-      </main>}
+      {project && <div className="project-modal-backdrop" role="presentation" onClick={() => setActiveProject(null)}><article className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-title" onClick={(event) => event.stopPropagation()}><div className="modal-head"><span>CASE STUDY / {project.code}</span><button type="button" onClick={() => setActiveProject(null)}>Close ×</button></div><div className="modal-body"><p className="eyebrow" style={{ color: project.color }}>{project.type}</p><h2 id="project-title">{project.title}</h2><p className="modal-description">{project.description}</p><div className="modal-meta"><span>ROLE<strong>{project.role}</strong></span><span>STACK<strong>{project.stack.join(' · ')}</strong></span><span>STATUS<strong>{project.status}</strong></span></div><blockquote>“{project.signal}”</blockquote><a className="primary-action" href="https://github.com/babydanh" target="_blank" rel="noreferrer">Open GitHub <span>↗</span></a></div></article></div>}
 
-      {hasEntered && <div className="nav-prompt"><button type="button" onClick={() => navigateBy(-1)} disabled={currentIndex <= 1}>↑</button><span>{currentChapter.code} / {String(CHAPTERS.length - 1).padStart(2, '0')}</span><button type="button" onClick={() => navigateBy(1)} disabled={currentIndex >= CHAPTERS.length - 1}>↓</button></div>}
-      <footer className="game-footer"><span>© 2026 NGUYỄN MINH DANH</span><span>REALTIME / INTERACTIVE / HUMAN-MADE</span><span>SCROLL TO RUN</span></footer>
+      <div className="page-progress"><span>0{viewIndex + 1}</span><i><b style={{ width: `${((viewIndex + 1) / VIEWS.length) * 100}%` }} /></i><span>0{VIEWS.length}</span></div><footer className="site-footer"><span>© 2026 NGUYỄN MINH DANH</span><span>DESIGNED IN MOTION / BUILT WITH INTENT</span></footer>
     </div>
   );
 }
