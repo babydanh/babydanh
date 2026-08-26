@@ -38,6 +38,9 @@ export default function PortfolioShell() {
   const [loadProgress, setLoadProgress] = useState(0);
   const [hasEntered, setHasEntered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState('forward');
+  const [transitionDestination, setTransitionDestination] = useState('');
+  const [transitionScene, setTransitionScene] = useState('');
   const [activeProject, setActiveProject] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(2);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -81,13 +84,21 @@ export default function PortfolioShell() {
 
   const navigateTo = useCallback((nextView) => {
     if (!nextView || nextView === view || isTransitioning) return;
+    const nextIndex = VIEWS.findIndex((item) => item.id === nextView);
+    const nextPage = VIEWS[nextIndex];
+    const nextLabel = nextPage?.label || nextView;
+    setTransitionDirection(nextIndex >= viewIndex ? 'forward' : 'backward');
+    setTransitionDestination(nextLabel);
+    setTransitionScene(nextPage?.scene || 'hub');
     setIsTransitioning(true);
     transitionTimerRef.current = window.setTimeout(() => {
       setView(nextView);
       setActiveProject(null);
       setIsTransitioning(false);
-    }, 430);
-  }, [view, isTransitioning]);
+      setTransitionDestination('');
+      setTransitionScene('');
+    }, 620);
+  }, [view, viewIndex, isTransitioning]);
 
   const navigateBy = useCallback((direction) => {
     if (!hasEntered) return;
@@ -169,12 +180,13 @@ export default function PortfolioShell() {
   const selectView = (id) => { if (id !== 'home' || hasEntered) { setHasEntered(true); navigateTo(id); } };
 
   return (
-    <div className={`portfolio-shell view-${view} ${hasEntered ? 'is-entered' : 'is-boot'} ${isLoaded ? 'is-ready' : 'is-loading'} ${isTransitioning ? 'is-transitioning' : ''}`}>
+    <div className={`portfolio-shell view-${view} ${hasEntered ? 'is-entered' : 'is-boot'} ${isLoaded ? 'is-ready' : 'is-loading'} ${isTransitioning ? 'is-transitioning' : ''} direction-${transitionDirection}`}>
       {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH / PORTFOLIO</span><span>LOADING EXPERIENCE</span></div><div className="preloader-orbit" aria-hidden="true"><i /><i /><i /></div><div className="preloader-copy"><p className="eyebrow">Next.js / Three.js / Web Audio</p><h1>Making the<br /><em>signal clear.</em></h1><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'PREPARING CONTENT' : 'READY TO ENTER'}</span></div></div><div className="preloader-bottom"><span>WEBGL READY</span><span>CONTENT FIRST</span><span>VN / 2026</span></div></section>}
-      <ExperienceCanvas chapter={hasEntered ? currentView.scene : 'hub'} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
+      <ExperienceCanvas chapter={hasEntered ? (transitionScene || currentView.scene) : 'hub'} audioData={audioData} pointer={pointer} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
       <div className="canvas-scrim" aria-hidden="true" />
       <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
       <div className="transition-layer" aria-hidden="true" />
+      {isTransitioning && <div className="transition-status" aria-live="polite"><span>TRAVELING / {currentView.label.toUpperCase()}</span><i /><strong>{transitionDestination.toUpperCase()}</strong></div>}
 
       <header className="site-header">
         <button className="site-brand" type="button" onClick={() => selectView('home')}><span className="brand-mark">+</span><span><b>DANH</b><small>CREATIVE DEVELOPER</small></span></button>
@@ -184,7 +196,7 @@ export default function PortfolioShell() {
 
       {!hasEntered && <section className="boot-overlay"><div className="boot-copy"><p className="eyebrow">A portfolio in motion</p><h2>Build with<br /><em>curiosity.</em></h2><p className="boot-lede">I&apos;m Nguyễn Minh Danh — an IT student and developer making useful things with code, motion and a little soul.</p><button className="enter-button" type="button" onClick={enterExperience} disabled={!isLoaded}><span>{isLoaded ? 'ENTER' : 'WAIT'}</span><b>{isLoaded ? 'Explore the portfolio' : 'Preparing the experience'}</b><strong>↗</strong></button><p className="boot-hint">Click to enter / sound begins with your permission</p></div><div className="boot-footer"><span>INTERACTIVE PORTFOLIO</span><span>SCROLL OR USE ARROW KEYS</span></div></section>}
 
-      {hasEntered && <main className="portfolio-main"><div className="page-stage">
+      {hasEntered && <main className="portfolio-main"><div className="page-stage" aria-live="polite" aria-label={`${currentView.label} page`}>
         {view === 'home' && <section className="page home-page" aria-labelledby="home-title"><div className="page-kicker"><span>01 / HOME</span><i /> <span>OPEN TO GOOD WORK</span></div><div className="home-grid"><div className="home-copy"><p className="eyebrow">Developer / Creator / HUFLIT</p><h1 id="home-title">Nguyễn Minh<br /><em>Danh.</em></h1><p className="lede">I design and build digital experiences where the interface feels as considered as the idea behind it.</p><div className="action-row"><button className="primary-action" type="button" onClick={() => navigateTo('work')}>View selected work <span>↗</span></button><button className="quiet-action" type="button" onClick={() => navigateTo('about')}>More about me <span>→</span></button></div><div className="home-facts"><span><b>01</b> Mobile systems</span><span><b>02</b> Realtime worlds</span><span><b>03</b> Curious by default</span></div></div><div className="home-visual"><div className="portrait-card"><span className="card-label">CURRENT SIGNAL / 001</span><img src={`${BASE_PATH}/avatar.jpg`} alt="Nguyễn Minh Danh" /><div className="portrait-footer"><span>AVAILABLE FOR BUILDING</span><span>VN</span></div></div><div className="visual-caption">A person behind<br /><em>the interface.</em></div></div></div></section>}
 
         {view === 'work' && <section className="page work-page" aria-labelledby="work-title"><div className="page-kicker"><span>02 / SELECTED WORK</span><i /><span>PROJECTS WITH A POINT OF VIEW</span></div><div className="section-heading"><div><p className="eyebrow">A small archive</p><h2 id="work-title">Things I&apos;m<br /><em>building.</em></h2></div><p className="section-note">A few experiments, products and systems from the current orbit. Select one to inspect the thinking behind it.</p></div><div className="project-grid">{PROJECTS.map((item, index) => <button type="button" className={`project-card project-${index + 1}`} key={item.title} onClick={() => selectProject(index)}><span className="project-number" style={{ color: item.color }}>0{item.code}</span><span className="project-type">{item.type}</span><strong>{item.title}</strong><p>{item.description}</p><span className="project-footer"><small>{item.status}</small><b>Open case ↗</b></span></button>)}</div></section>}
