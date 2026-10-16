@@ -6,10 +6,6 @@
   <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=700&size=32&pause=1000&color=4facfe&center=true&vCenter=true&width=600&lines=Welcome+to+Babydanh's+Profile!;An+IT+Student+and+Developer" alt="Typing SVG" />
 </p>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/babydanh/babydanh/main/src/assets/avatar.jpg" width="160" style="border-radius: 50%;" />
-</p>
-
 <hr style="border-top: 1px solid #30363d;">
 
 <h2 align="center">About Me</h2>
