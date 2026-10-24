@@ -39,7 +39,6 @@
   <tr><td><a href="https://sporto.asia"><b>Sporto</b></a> · <a href="https://github.com/babydanh/HethongFrontEndApp_QLgiaidau">mobile app</a></td><td>Pickleball tournament platform: registration, draws, court scheduling, live scoring, livestream</td><td>Next.js · NestJS · Flutter · PostgreSQL</td></tr>
   <tr><td><a href="https://github.com/babydanh/autotestSportO"><b>autotestSportO</b></a></td><td>Automated test suite for Sporto: Playwright E2E, API integration, results synced to Excel</td><td>TypeScript · Playwright</td></tr>
   <tr><td><a href="https://github.com/babydanh/expressjsbooking"><b>expressjsbooking</b></a></td><td>Backend for a booking (appointment scheduling) system</td><td>Node.js · Express · PostgreSQL</td></tr>
-  <tr><td><a href="https://github.com/babydanh/DoAnRaoVat"><b>DoAnRaoVat</b></a></td><td>RaoVat24H classifieds app (course project)</td><td>Flutter</td></tr>
   <tr><td><a href="https://github.com/babydanh/Nhom207_BaoDam"><b>Nhom207_BaoDam</b></a> · <a href="https://github.com/babydanh/BaoDamThucHanh">BaoDamThucHanh</a></td><td>Course projects</td><td>C#</td></tr>
 </table>
 
