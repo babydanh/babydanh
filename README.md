@@ -147,3 +147,7 @@
 <p align="center">
   Thanks for visiting! Drop a ⭐ if you like my work!
 </p>
+
+<p align="center">
+  <sub>3D desk scene: laptop model generated with <a href="https://www.meshy.ai/" target="_blank" rel="noreferrer">Meshy</a> (CC BY 4.0); desk props from <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven</a> (CC0).</sub>
+</p>
