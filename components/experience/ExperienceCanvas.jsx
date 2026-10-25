@@ -12,10 +12,10 @@ const MODEL_URL = `${BASE_PATH}/models/desk.glb`;
 
 // Camera stations around the desk (meters, Y up). Each chapter looks at one prop group.
 const CHAPTER_CAMERA = {
-  boot: { position: [1.0, 0.7, 1.9], look: [0.05, 0.15, -0.1], fov: 30 },
-  hub: { position: [0.7, 0.6, 1.3], look: [0.18, 0.14, -0.08], fov: 30 },
+  boot: { position: [0.8, 0.75, 2.0], look: [0.08, 0.15, -0.1], fov: 30 },
+  hub: { position: [0.45, 0.62, 1.55], look: [0.1, 0.14, -0.05], fov: 30 },
   map: { position: [0.3, 0.3, 0.9], look: [0.4, 0.24, -0.3], fov: 32 },
-  loadout: { position: [-0.9, 0.45, 0.8], look: [-0.45, 0.12, -0.05], fov: 30 },
+  loadout: { position: [-0.75, 0.38, 0.75], look: [-0.32, 0.1, 0.0], fov: 32 },
   contact: { position: [0.25, 0.3, 0.9], look: [0.08, 0.06, 0.1], fov: 34 },
 };
 
@@ -73,7 +73,7 @@ function Rig({ chapter, pointerRef }) {
     const { camera, size } = state;
     const pointer = pointerRef?.current || { x: 0, y: 0 };
     // Portrait screens crop the sides, so back the camera off from its look target.
-    const fit = THREE.MathUtils.clamp(1.1 / (size.width / size.height), 1, 2.2);
+    const fit = THREE.MathUtils.clamp(1.1 / (size.width / size.height), 1, 3);
     look.set(...target.look);
     desired.set(...target.position).sub(look).multiplyScalar(fit).add(look);
     desired.x += pointer.x * 0.04;
