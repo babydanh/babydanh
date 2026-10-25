@@ -25,6 +25,40 @@ export default function PortfolioShell() {
     return () => window.removeEventListener('pointermove', handlePointer);
   }, []);
 
+  // Wheel, arrow keys and vertical swipe step through the stations; the lock stops one gesture from skipping several.
+  useEffect(() => {
+    let locked = false;
+    let touchY = 0;
+    let timer;
+    const step = (dir) => {
+      if (locked) return;
+      locked = true;
+      timer = window.setTimeout(() => { locked = false; }, 800);
+      setView((id) => VIEWS[Math.min(VIEWS.length - 1, Math.max(0, VIEWS.findIndex((item) => item.id === id) + dir))].id);
+    };
+    const onWheel = (event) => { if (Math.abs(event.deltaY) >= 20) step(event.deltaY > 0 ? 1 : -1); };
+    const onKey = (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') step(1);
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') step(-1);
+    };
+    const onTouchStart = (event) => { touchY = event.touches[0].clientY; };
+    const onTouchEnd = (event) => {
+      const delta = touchY - event.changedTouches[0].clientY;
+      if (Math.abs(delta) > 50) step(delta > 0 ? 1 : -1);
+    };
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
+
   const current = VIEWS.find((item) => item.id === view) || VIEWS[0];
 
   return (

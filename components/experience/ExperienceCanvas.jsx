@@ -12,11 +12,11 @@ const MODEL_URL = `${BASE_PATH}/models/desk.glb`;
 
 // Camera stations around the desk (meters, Y up). Each chapter looks at one prop group.
 const CHAPTER_CAMERA = {
-  boot: { position: [0.9, 0.7, 1.9], look: [-0.05, 0.18, -0.1], fov: 30 },
-  hub: { position: [0.5, 0.6, 1.3], look: [-0.05, 0.18, -0.1], fov: 30 },
+  boot: { position: [1.0, 0.7, 1.9], look: [0.05, 0.15, -0.1], fov: 30 },
+  hub: { position: [0.7, 0.6, 1.3], look: [0.18, 0.14, -0.08], fov: 30 },
   map: { position: [0.3, 0.3, 0.9], look: [0.4, 0.24, -0.3], fov: 32 },
   loadout: { position: [-0.9, 0.45, 0.8], look: [-0.45, 0.12, -0.05], fov: 30 },
-  contact: { position: [-0.1, 0.34, 1.0], look: [-0.1, 0.25, -0.2], fov: 34 },
+  contact: { position: [0.25, 0.3, 0.9], look: [0.08, 0.06, 0.1], fov: 34 },
 };
 
 const PROJECT_COLORS = ['#00e5ff', '#a78bfa', '#ff4d8d'];
