@@ -149,5 +149,5 @@
 </p>
 
 <p align="center">
-  <sub>3D desk scene: laptop model generated with <a href="https://www.meshy.ai/" target="_blank" rel="noreferrer">Meshy</a> (CC BY 4.0); desk props from <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven</a> (CC0).</sub>
+  <sub>3D desk scene: laptop modelled by hand in Blender; desk props from <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven</a> (CC0).</sub>
 </p>
