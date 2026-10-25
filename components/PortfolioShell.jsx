@@ -193,7 +193,7 @@ export default function PortfolioShell() {
   return (
     <div className={`portfolio-shell view-${view} ${hasEntered ? 'is-entered' : 'is-boot'} ${isLoaded ? 'is-ready' : 'is-loading'} ${isTransitioning ? 'is-transitioning' : ''} direction-${transitionDirection}`}>
       {!isLoaded && <section className="preloader" aria-label="Loading portfolio experience"><div className="preloader-top"><span>DANH / PORTFOLIO</span><span>LOADING EXPERIENCE</span></div><div className="preloader-orbit" aria-hidden="true"><i /><i /><i /></div><div className="preloader-copy"><p className="eyebrow">Next.js / Three.js / Web Audio</p><h1>Making the<br /><em>signal clear.</em></h1><div className="preloader-bar"><span style={{ width: `${loadProgress}%` }} /></div><div className="preloader-readout"><span>{String(loadProgress).padStart(3, '0')}%</span><span>{loadProgress < 100 ? 'PREPARING CONTENT' : 'READY TO ENTER'}</span></div></div><div className="preloader-bottom"><span>WEBGL READY</span><span>CONTENT FIRST</span><span>VN / 2026</span></div></section>}
-      <ExperienceCanvas chapter={hasEntered ? (transitionScene || currentView.scene) : 'hub'} audioDataRef={audioDataRef} pointerRef={pointerRef} activeProject={activeProject} onSelectProject={(item) => selectProject(item.index)} onHoverProject={() => undefined} />
+      <ExperienceCanvas chapter={hasEntered ? (transitionScene || currentView.scene) : 'hub'} audioDataRef={audioDataRef} pointerRef={pointerRef} activeProject={activeProject} />
       <div className="canvas-scrim" aria-hidden="true" />
       <audio ref={audioRef} src={`${BASE_PATH}/music.mp3`} loop preload="metadata" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
       <div className="transition-layer" aria-hidden="true" />

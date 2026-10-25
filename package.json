@@ -13,7 +13,9 @@
   "dependencies": {
     "@react-three/drei": "latest",
     "@react-three/fiber": "latest",
+    "@react-three/postprocessing": "^3.2.2",
     "next": "latest",
+    "postprocessing": "^6.39.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "three": "latest"
