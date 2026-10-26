@@ -149,5 +149,5 @@
 </p>
 
 <p align="center">
-  <sub>3D desk scene: laptop modelled by hand in Blender; desk props from <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven</a> (CC0).</sub>
+  <sub>3D desk scene: laptop modelled by hand in Blender; desk props from <a href="https://polyhaven.com/" target="_blank" rel="noreferrer">Poly Haven</a> (CC0); mouse "Computer mouse" by <a href="https://poly.pizza/m/6ikB7PIRVyd" target="_blank" rel="noreferrer">Poly by Google</a> via Poly Pizza (<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>, rescaled and re-lit).</sub>
 </p>
