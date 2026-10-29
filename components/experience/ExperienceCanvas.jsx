@@ -4,8 +4,9 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { Bloom, EffectComposer, ToneMapping } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import MiniOffice from './office/MiniOffice';
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const MODEL_URL = `${BASE_PATH}/models/desk.glb`;
@@ -17,6 +18,8 @@ const CHAPTER_CAMERA = {
   map: { position: [0.16, 0.3, 0.9], look: [0.26, 0.31, -0.3], fov: 32 },
   loadout: { position: [-0.2, 0.34, 0.85], look: [0.26, 0.31, -0.3], fov: 32 },
   contact: { position: [0.7, 0.34, 0.7], look: [0.27, 0.3, -0.3], fov: 32 },
+  // Close over the tiny office that sits on the desk between the keyboard and the monitor stand.
+  office: { position: [0.13, 0.2, 0.22], look: [0.13, 0.005, -0.11], fov: 30 },
 };
 
 // Monitor pages, keyed like CHAPTER_CAMERA. Content mirrors the profile README.
@@ -50,11 +53,27 @@ const SCREEN_PAGES = {
     items: [['GitHub', 'github.com/babydanh'], ['Discord', 'babydanh'], ['Portfolio', 'babydanh.github.io/babydanh']],
     chips: [],
   },
+  office: {
+    tag: '~/office', accent: '#5ef2a0', title: 'The office', sub: 'Twelve garlic bulbs, hard at work',
+    items: [['status', 'Everyone is settling in...']],
+    chips: [],
+  },
 };
 const SCREEN_W = 1600;
 const SCREEN_H = 925;
 const LABEL_W = 400;
 const MONITOR_SIZE = [0.545, 0.315];
+const LOG_LINES = 5;
+const LOG_REPAINT_MS = 1000;
+
+const prefersCalm = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// The office page lists the latest things the residents said; every other page is static.
+function pageFor(chapter, log) {
+  const page = SCREEN_PAGES[chapter] || SCREEN_PAGES.hub;
+  if (chapter !== 'office' || !log.length) return page;
+  return { ...page, items: log.slice(-LOG_LINES).map(({ role, text }) => [role, text]) };
+}
 
 // Break `text` into lines no wider than `maxWidth` for the current ctx font.
 function wrapLines(ctx, text, maxWidth) {
@@ -128,7 +147,7 @@ const LAMP_AXIS = new THREE.Vector3(0.159, -0.095, 0.19).normalize();
 const LAMP_BULB = [-0.683, 0.364, -0.265];
 const LAMP_AIM = new THREE.Vector3(-0.15, 0.02, 0.05);
 
-function Desk({ chapter }) {
+function Desk({ chapter, logRef }) {
   const { scene, nodes, materials } = useGLTF(MODEL_URL);
   const screen = nodes.mon_screen;
   const wallLed = useRef(null);
@@ -150,7 +169,7 @@ function Desk({ chapter }) {
     return texture;
   }, [screenCanvas]);
   // Skip the flashing for visitors who ask for reduced motion.
-  const calm = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+  const calm = useMemo(prefersCalm, []);
 
   useEffect(() => {
     HIDDEN_LEDS.forEach((name) => { if (nodes[name]) nodes[name].visible = false; });
@@ -174,15 +193,18 @@ function Desk({ chapter }) {
   }, [nodes, materials]);
 
   // Repaint the monitor when the station changes; repaint again once the web fonts have loaded.
+  // The office page also repaints once a second so new chatter shows up.
   useEffect(() => {
-    const page = SCREEN_PAGES[chapter] || SCREEN_PAGES.hub;
     const paint = () => {
-      drawScreen(screenCanvas.getContext('2d'), page);
+      drawScreen(screenCanvas.getContext('2d'), pageFor(chapter, logRef.current));
       screenTexture.needsUpdate = true;
     };
     paint();
     document.fonts?.ready.then(paint);
-  }, [chapter, screenCanvas, screenTexture]);
+    if (chapter !== 'office') return undefined;
+    const timer = window.setInterval(paint, LOG_REPAINT_MS);
+    return () => window.clearInterval(timer);
+  }, [chapter, logRef, screenCanvas, screenTexture]);
 
   useFrame(({ clock }) => {
     const t = calm ? 0 : clock.elapsedTime;
@@ -249,6 +271,12 @@ function Rig({ chapter, pointerRef }) {
 }
 
 function Scene({ chapter, pointerRef }) {
+  const calm = useMemo(prefersCalm, []);
+  const logRef = useRef([]);
+  const onLog = useCallback((entry) => {
+    logRef.current.push(entry);
+    if (logRef.current.length > LOG_LINES) logRef.current.shift();
+  }, []);
   return (
     <>
       <color attach="background" args={['#02030a']} />
@@ -258,9 +286,11 @@ function Scene({ chapter, pointerRef }) {
       <pointLight color="#ff4d8d" intensity={0.35} distance={2.5} position={[0.8, 0.3, -0.25]} />
       <Rig chapter={chapter} pointerRef={pointerRef} />
       <Suspense fallback={null}>
-        <Desk chapter={chapter} />
+        <Desk chapter={chapter} logRef={logRef} />
       </Suspense>
-      <EffectComposer multisampling={0}>
+      <MiniOffice active={chapter === 'office'} calm={calm} onLog={onLog} />
+      {/* Edges of the tiny office are only a few pixels wide, so smooth them while it is the subject. */}
+      <EffectComposer multisampling={chapter === 'office' ? 4 : 0}>
         <Bloom mipmapBlur intensity={0.6} luminanceThreshold={1} radius={0.4} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
@@ -274,7 +304,7 @@ export default function ExperienceCanvas({ chapter, pointerRef }) {
   return (
     <div className="experience-canvas" aria-hidden="true">
       <div className="canvas-vignette" />
-      <Canvas camera={{ position: CHAPTER_CAMERA.boot.position, fov: CHAPTER_CAMERA.boot.fov, near: 0.05, far: 20 }} dpr={[0.75, 1]} frameloop="always" performance={{ min: 0.5, max: 1, debounce: 220 }} gl={{ antialias: false, alpha: true, powerPreference: 'high-performance', stencil: false, depth: true }}>
+      <Canvas camera={{ position: CHAPTER_CAMERA.boot.position, fov: CHAPTER_CAMERA.boot.fov, near: 0.05, far: 20 }} dpr={chapter === 'office' ? [1, 1.5] : [0.75, 1]} frameloop="always" performance={{ min: 0.5, max: 1, debounce: 220 }} gl={{ antialias: false, alpha: true, powerPreference: 'high-performance', stencil: false, depth: true }}>
         <Scene chapter={chapter} pointerRef={pointerRef} />
       </Canvas>
     </div>

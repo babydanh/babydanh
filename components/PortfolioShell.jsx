@@ -10,6 +10,7 @@ const VIEWS = [
   { id: 'home', label: 'Home', scene: 'hub' },
   { id: 'work', label: 'Selected work', scene: 'map' },
   { id: 'about', label: 'About', scene: 'loadout' },
+  { id: 'office', label: 'Office', scene: 'office' },
   { id: 'contact', label: 'Contact', scene: 'contact' },
 ];
 

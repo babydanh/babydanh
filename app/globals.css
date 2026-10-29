@@ -68,3 +68,5 @@
 .portfolio-shell .transition-layer{backdrop-filter:none;filter:none}
 .portfolio-shell .canvas-vignette{will-change:auto}
 
+/* Speech bubble above a garlic resident in the tiny office. */
+.office-bubble{padding:3px 7px;border:1px solid var(--accent);border-radius:6px;background:rgba(7,11,16,.88);color:#edf7fb;font:7px var(--mono);letter-spacing:.04em;white-space:nowrap;pointer-events:none;transform:translateY(-6px)}
