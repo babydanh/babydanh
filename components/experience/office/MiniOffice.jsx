@@ -8,17 +8,22 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { createGarlic, poseGarlic } from './garlic.js';
 import { MATERIALS, PARTS } from './furniture.js';
 import { CAST, ROOMS } from './layout.js';
+import { assignPresence, isFresh, roomFor } from './presence.js';
 import { advance, buildPath, pickDest, roomIndex, takeSpot } from './sim.js';
 
-// The office sits on the desk just above the keyboard, centred on it (metres); one office unit is UNIT metres.
-const OFFICE_POS = [0.13, 0.0055, -0.11];
-const UNIT = 0.021;
+// The office sits on the desk to the right of the keyboard, in front of the monitor stand (metres); one office unit is UNIT metres.
+const OFFICE_POS = [0.49, 0.0055, -0.125];
+const UNIT = 0.03;
 const FLOOR_Y = 0.04;
 const SPEED = 0.75; // office units per second
 const IDLE_INTERVAL = 1 / 12; // seconds between updates while the camera is on another station
 const SAY_SECONDS = 2.8;
+// Beyond about a metre a hand is a pixel wide, so the fine parts are hidden; the gap between the two limits stops flicker.
+const NEAR_DISTANCE = 0.85;
+const FAR_DISTANCE = 1.0;
 const MOBILE_WIDTH = 700;
 const MOBILE_RESIDENTS = 6;
+const PRESENCE_SYNC_SECONDS = 1;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -69,7 +74,11 @@ function createWorld(count) {
 }
 
 function startTrip(world, a) {
-  const to = pickDest(Math.random, a.cfg, a.room);
+  const to = a.want ?? pickDest(Math.random, a.cfg, a.room);
+  if (to === a.room) {
+    a.wait = 3; // already where the Board says it should be
+    return;
+  }
   const spot = takeSpot(world.seats[to], a.k, Math.random);
   if (spot < 0) {
     a.wait = 1 + Math.random() * 1.5; // destination full: try again soon
@@ -99,6 +108,26 @@ function settle(a) {
   a.x = seat.x;
   a.z = seat.z;
   a.wait = a.room === roomIndex(a.cfg.home) ? 6 + Math.random() * 8 : 3 + Math.random() * 4;
+  if (a.want != null && a.want !== a.room) a.wait = 0; // the Board changed its mind mid-walk: go on at once
+}
+
+// Point residents at the rooms the Board's agents are in; a resident without a fresh entry goes back to wandering.
+// Returns the residents whose live line just changed.
+function syncPresence(world, presence) {
+  const live = isFresh(presence) ? assignPresence(presence, world.residents.map((a) => a.cfg)) : new Map(); // only residents that exist (phones seat fewer)
+  const changed = [];
+  for (const a of world.residents) {
+    const entry = live.get(a.k);
+    const want = entry ? roomIndex(roomFor(entry.state, a.cfg)) : null;
+    if (want !== (a.want ?? null) && !a.moving) a.wait = 0;
+    a.want = want;
+    const text = entry?.text || null;
+    if (text !== (a.liveText ?? null)) {
+      a.liveText = text;
+      if (text) changed.push(a);
+    }
+  }
+  return changed;
 }
 
 function applyResident(a, t) {
@@ -111,7 +140,7 @@ function applyResident(a, t) {
   poseGarlic(a.g, { t, phase: a.phase, k: a.k, walk: a.moving, act, speaking: t < a.sayUntil });
 }
 
-export default function MiniOffice({ active, calm, onLog }) {
+export default function MiniOffice({ active, calm, onLog, presenceRef }) {
   const width = useThree((s) => s.size.width);
   const count = width < MOBILE_WIDTH ? MOBILE_RESIDENTS : CAST.length;
   const furniture = useMemo(mergeFurniture, []);
@@ -120,11 +149,11 @@ export default function MiniOffice({ active, calm, onLog }) {
   const [speech, setSpeech] = useState({});
   const acc = useRef(0);
   const timers = useRef([]);
+  const lastSync = useRef(-Infinity);
 
-  // The face is only worth drawing from the Office station; elsewhere the residents are a few pixels tall.
-  useEffect(() => {
-    world.residents.forEach((a) => { a.g.face.visible = active; });
-  }, [active, world]);
+  const centre = useMemo(() => new THREE.Vector3(...OFFICE_POS), []);
+  const near = useRef(null);
+  useEffect(() => { near.current = null; }, [world]); // a new cast has not been through the distance check yet
 
   // Reduced motion: hold everyone in a still pose at their seat.
   useEffect(() => {
@@ -135,20 +164,32 @@ export default function MiniOffice({ active, calm, onLog }) {
 
   const say = (a, t) => {
     const room = ROOMS[a.room];
-    const text = pick(room.say);
+    const text = a.liveText || pick(room.say);
     a.sayUntil = t + SAY_SECONDS;
     setSpeech((s) => ({ ...s, [a.k]: text }));
     timers.current.push(setTimeout(() => setSpeech((s) => ({ ...s, [a.k]: '' })), SAY_SECONDS * 1000));
-    onLog?.({ role: a.cfg.role, text: `${room.name}: ${text}` });
+    if (!a.liveText) onLog?.({ role: a.cfg.role, text: `${room.name}: ${text}` }); // live lines are logged when they change, not when the bubble shows
   };
 
   useFrame((state, delta) => {
+    const wantNear = state.camera.position.distanceTo(centre) < (near.current ? FAR_DISTANCE : NEAR_DISTANCE);
+    if (wantNear !== near.current) {
+      near.current = wantNear;
+      world.residents.forEach((a) => a.g.fine.forEach((part) => { part.visible = wantNear; }));
+    }
     if (calm) return;
     acc.current += delta;
     if (!active && acc.current < IDLE_INTERVAL) return;
     const dt = Math.min(acc.current, 0.1);
     acc.current = 0;
     const t = state.clock.elapsedTime;
+    if (t - lastSync.current >= PRESENCE_SYNC_SECONDS) {
+      lastSync.current = t;
+      syncPresence(world, presenceRef.current).forEach((a) => {
+        onLog?.({ role: a.cfg.role, text: a.liveText, live: true });
+        if (!a.moving) say(a, t);
+      });
+    }
     for (const a of world.residents) {
       if (stepResident(world, a, dt)) {
         settle(a);

@@ -109,7 +109,9 @@ export function createGarlic(leafColor, skinColor) {
   });
   body.add(mesh(s.body, skin), mesh(s.bud, tip, 0, 0.535, 0), face.face, ...hands);
   root.add(shadow, body, ...feet);
-  return { root, body, hands, feet, ...face };
+  // Parts too small to see from across the desk; the office hides them while the camera is far away.
+  const fine = [face.face, ...hands, ...feet, shadow];
+  return { root, body, hands, feet, shadow, fine, ...face };
 }
 
 // Hand height, hand reach and which hand moves, for what the resident is doing.

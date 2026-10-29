@@ -13,6 +13,13 @@ test('a resident has a body, two hands, two feet and a face', () => {
   assert.ok(g.root.children.includes(g.body));
 });
 
+test('the fine parts can be hidden together', () => {
+  const g = createGarlic(0x00e5ff, 0xf6efe4);
+  assert.equal(g.fine.length, 6); // face, two hands, two feet, shadow
+  assert.ok(g.fine.every((part) => part.visible));
+  assert.ok(!g.fine.includes(g.body));
+});
+
 test('every activity poses the resident without producing NaN', () => {
   const g = createGarlic(0xffc857, 0xffd9bd);
   for (const act of ACTS) for (const walk of [false, true]) for (let i = 0; i < 20; i++) {

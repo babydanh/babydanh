@@ -69,4 +69,15 @@
 .portfolio-shell .canvas-vignette{will-change:auto}
 
 /* Speech bubble above a garlic resident in the tiny office. */
-.office-bubble{padding:3px 7px;border:1px solid var(--accent);border-radius:6px;background:rgba(7,11,16,.88);color:#edf7fb;font:7px var(--mono);letter-spacing:.04em;white-space:nowrap;pointer-events:none;transform:translateY(-6px)}
+.office-bubble{padding:6px 11px;border:1px solid var(--accent);border-radius:9px;background:rgba(7,11,16,.92);color:#edf7fb;font:600 13px var(--mono);letter-spacing:.02em;white-space:nowrap;pointer-events:none;transform:translateY(-8px)}@media(max-width:700px){.office-bubble{padding:5px 9px;font-size:11px}}
+
+/* The scene takes clicks: objects on the desk zoom the camera in. */
+.portfolio-shell .experience-canvas{pointer-events:auto;touch-action:none;overscroll-behavior:none}
+
+/* README card shown on the monitor, styled after GitHub's dark theme. */
+.site-clock{display:inline-flex;align-items:center;gap:10px;font:11px var(--mono);letter-spacing:.08em;color:#dbe8ec}
+.site-clock b{font-weight:500;font-size:13px;letter-spacing:.12em}
+.site-clock small{font-size:9px;letter-spacing:.1em;color:rgba(219,232,236,.6)}
+.clock-dot{width:7px;height:7px;border-radius:50%;background:#5ef2a0;box-shadow:0 0 8px #5ef2a0}
+.stats-corner{top:auto!important;bottom:0!important}
+@media(max-width:700px){.site-clock small{display:none}}
